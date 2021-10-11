@@ -1,0 +1,28 @@
+#include <stdio.h>
+#include <wiringPi.h>
+ 
+int main()
+{
+
+    wiringPiSetup();    
+    pinMode(4,INPUT); // alarme dip switch
+
+    //display LCD
+    pinMode(25,OUTPUT); //RS
+    pinMode(,OUTPUT); //RW
+    pinMode(1,OUTPUT); //E
+    pinMode(12,OUTPUT); //D4
+    pinMode(16,OUTPUT); //D5
+    pinMode(20,OUTPUT); //D6
+    pinMode(21,OUTPUT); //D7  
+    lcd = lcdInit(2,16,4,25,1,12,16,20,21);
+     
+    while(1)
+    {
+        if(digitalRead(4) == HIGH)       
+        {
+            lcdPuts(lcd,"Testando");
+        } 
+    }
+    return 0;
+}   
