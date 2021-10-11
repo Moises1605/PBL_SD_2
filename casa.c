@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h> 
 #include <wiringPi.h>
+#include <lcd.h>
 #include <mosquitto.h>
 #include <string.h> 
 
@@ -8,12 +9,35 @@
 #define PORT  1883
 #define KEEP_ALIVE 60
 #define MSG_MAX_SIZE  512
-#define TOPIC_NUM 3
+#define TOPIC_NUM 3 
+
+//Entradas DIP SWICTH
+#define DIP_1 4
+#define DIP_2 17
+#define DIP_3 27
+#define DIP_4 22
+
+//Entradas Botões
+#define BUTTON_1 5
+#define BUTTON_2 19
+#define BUTTON_3 26
+
+
+//Entradas Potenciomentto
+#define POTEN_SDA 2
+#define POTEN_SCL 3
+
+//Saidas LCD
+#define LCD_RS  25 
+#define LCD_E   1  
+#define LCD_D4  12 
+#define LCD_D5  16 
+#define LCD_D6  20
+#define LCD_D7  21
 
 bool session = true;
 
-const static char* topic[TOPIC_NUM] =
-{
+const static char* topic[TOPIC_NUM] = {
     "arCondicionado",
     "alarme ",
     "sensorPJ ",
@@ -25,8 +49,7 @@ const static char* topic[TOPIC_NUM] =
 
 }; 
 
-void my_message_callback(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *message)
-{
+void my_message_callback(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *message){
     
     if(message->payloadlen){
         printf("%s %s", message->topic, (char *)message->payload);
@@ -36,8 +59,7 @@ void my_message_callback(struct mosquitto *mosq, void *userdata, const struct mo
     fflush(stdout);
 }
 
-void my_connect_callback(struct mosquitto *mosq, void *userdata, int result)
-{
+void my_connect_callback(struct mosquitto *mosq, void *userdata, int result){
     int i;
     if(!result){
         /* Subscribe to broker information topics on successful connect. */
@@ -54,8 +76,7 @@ void my_connect_callback(struct mosquitto *mosq, void *userdata, int result)
     }
 }
 
-void my_subscribe_callback(struct mosquitto *mosq, void *userdata, int mid, int qos_count, const int *granted_qos)
-{
+void my_subscribe_callback(struct mosquitto *mosq, void *userdata, int mid, int qos_count, const int *granted_qos){
     int i;
     printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
     for(i=1; i<qos_count; i++){
@@ -64,15 +85,14 @@ void my_subscribe_callback(struct mosquitto *mosq, void *userdata, int mid, int 
     printf("\n");
 }
 
-void my_log_callback(struct mosquitto *mosq, void *userdata, int level, const char *str)
-{
+void my_log_callback(struct mosquitto *mosq, void *userdata, int level, const char *str){
     /* Pring all log messages regardless of level. */
     printf("%s\n", str);
 }
 
 
 int main(){ 
-
+    
     struct mosquitto *mosq = NULL;
     char buff[MSG_MAX_SIZE];
     
@@ -116,36 +136,23 @@ int main(){
     mosquitto_destroy(mosq);
     mosquitto_lib_cleanup();
 
-    /*Lista de entradas do programa*/ 
-    pinMode(4,INPUT); // alarme dip switch
-    pinMode(27,INPUT); //sensor presença
-    pinMode(22,INPUT); //sensor de portas e janelas
-    pinMode(,INPUT); //temperatura pontenciometro 
-
-
-
-    //pinMode(,OUTPUT); // Saida geral, o que muda é a mensagem apresentada
-    
-    //display LCD
-    pinMode(25,OUTPUT); //RS
-    pinMode(,OUTPUT); //RW
-    pinMode(1,OUTPUT); //E
-    pinMode(12,OUTPUT); //D4
-    pinMode(16,OUTPUT); //D5
-    pinMode(20,OUTPUT); //D6
-    pinMode(21,OUTPUT); //D7    
-
-    /*int entrada_alarme;
-    int entrada_sensor_presenca;
-    int entrada_sensot_PJ;
-    int entrada_temperatura;*/
-
     int lcd;
-    wiringPiSetup();
-    lcd = lcdInit(2,16,4,digitalRead(25), digitalRead(1),digitalRead(12),digitalRead(16),digitalRead(20),digitalRead(21));
-    //lcdPuts(lcd,"mensagem a ser exibida"); 
-    sleep(2);
-    lcdClear(lcd);
+    wiringPiSetupGpio();
+    /*Lista de entradas do programa*/ 
+    pinMode(DIP_1,INPUT); // alarme
+    pinMode(DIP_2,INPUT); // sensor presença
+    pinMode(DIP_3,INPUT); // sensor de portas e janelas
+    pinMode(DIP_4,INPUT); 
+
+    pinMode(BUTTON_1,INPUT); 
+    pinMode(BUTTON_2,INPUT); 
+    pinMode(BUTTON_3,INPUT); 
+
+    pinMode(POTEN_SDA,INPUT);
+    pinMode(POTEN_SCL,INPUT);
+
+    int lcd = lcdInit(2,16,4,LCD_RS,LCD_E,LCD_D4,LCD_D5,LCD_D6,LCD_D7,0,0,0,0); 
+    //sleep(2);
 
     int horario;
     int faixa_operacao_S;
@@ -153,12 +160,9 @@ int main(){
     int temopar
 
     /*Lista de entradas do programa*/
-    char saida_iluminacao_internaL[] = "Luz ligada";
-    char saida_iluminacao_internaD[] = "Luz desligada";
-    char saida_Saida_alarmeL[] = "Alarme ligado";
-    char saida_Saida_alarmeD[] = "Alarme desligado";
-    char saida_ar_condicionadoL[] = "ar ligado";
-    char saida_ar_condicionadoD[] = "ar desligado";
+    char saida_iluminacao_interna[];
+    char saida_Saida_alarme[];
+    char saida_ar_condicionado[];
 
     char saida_sensot_PJ[] = "";
     char saida_ar_condicionado[] = "";
@@ -171,62 +175,53 @@ int main(){
         //iluminacao_garagem
         if(digitalRead(27) == HIGH && !(horario > 6 && horario < 18)){
             saida_iluminacao_Garagem = 1;
-            lcdPuts(lcd,saida_iluminacao_internaL);
         }else{
             saida_iluminacao_Garagem = 0;
-            lcdPuts(lcd,saida_iluminacao_internaD);
         }
 
         //iluminacai_jardim
         if(horario >= 18 && horario <= 23){
             saida_iluminacao_jardim = 1;
-            lcdPuts(lcd,saida_iluminacao_internaL);
         }else{
             saida_iluminacao_jardim = 0;
-            lcdPuts(lcd,saida_iluminacao_internaD);
         }
 
 
         //iluminação interna
         if(digitalRead(27) == HIGH){
             saida_iluminacao_interna = 1;
-            lcdPuts(lcd,saida_iluminacao_internaL);
+            saida_iluminacao_interna = "Luz L"
         }else{
             saida_iluminacao_interna = 0;
-            lcdPuts(lcd,saida_iluminacao_internaD);
+            saida_iluminacao_interna = "Luz D"
         } 
 
         //alarme
         if((digitalRead(22) == HIGH)  || (digitalRead(27) == HIGH) && (digitalRead(4) == HIGH)){
-            saida_Saida_alarme = 1;
-            lcdPuts(lcd,saida_Saida_alarmeL);
+            saida_Saida_alarme = "Alarme L";
         }else{
-            saida_Saida_alarme = 0;
-            lcdPuts(lcd,saida_Saida_alarmeD);
+            saida_Saida_alarme = "Alarme D";
         } 
 
         //ar condicionado
         if(temopar){
             if(faixa_operacao_I >= faixa_operacao_S){
-                saida_ar_condicionado = 0;
+                saida_ar_condicionado = "ar D";
             }else{
                 if(digitalRead(27) == HIGH){
                     if(entrada_temperatura <= faixa_operacao_I){
-                        saida_ar_condicionado = 0;
-                        lcdPuts(lcd,saida_ar_condicionadoD);
+                        saida_ar_condicionado = "ar D";
                     }else if(entrada_temperatura >= faixa_operacao_S){
-                        saida_ar_condicionado = 1;
-                        lcdPuts(lcd,saida_ar_condicionadoL);
+                        saida_ar_condicionado = "ar L";
                     }
                 }else{
-                    saida_ar_condicionado = 0;
-                    lcdPuts(lcd,saida_ar_condicionadoD);
+                    saida_ar_condicionado = "ar D";
                 }
             }
             if(entrada_temperatura == 17){
-                saida_ar_condicionado = 0;
+                saida_ar_condicionado = "ar D";
                 temopar = 0;
-                lcdPuts(lcd,saida_ar_condicionadoD);
+                
             }
         }
 
@@ -237,7 +232,18 @@ int main(){
         //quebra do loop
         if(0){
             break;
-        }
+        } 
+
+        //printar mensagens no lcd
+        lcdClear(lcd);
+        lcdPosition(lcd, 0, 0);
+        lcdPuts(lcd,saida_ar_condicionado);
+        lcdPosition(lcd, 5, 0);
+        lcdPuts(lcd,saida_iluminacao_interna);
+        lcdPosition(lcd, 0, 1);
+        lcdPuts(lcd,saida_Saida_alarme);
+        /*Por padrão, o texto é impresso na tela na linha superior, segunda coluna. Para alterar a posição, use 
+        lcdPosition (lcd, COLUMN, ROW).Em um LCD 16 × 2, as linhas são numeradas de 0 a 1 e as colunas são numeradas de 0 a 15.*/
     }
 
     return 0;
