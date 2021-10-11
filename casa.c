@@ -14,9 +14,15 @@ bool session = true;
 
 const static char* topic[TOPIC_NUM] =
 {
-    "Gai Ye:",
-    "ycy ",
-    "CCYY "
+    "arCondicionado",
+    "alarme ",
+    "sensorPJ ",
+    "faixaOpI",
+    "faixaOpS",
+    "iluminacao1",
+    "iluminacao2",
+    "iluminacao3",
+
 }; 
 
 void my_message_callback(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *message)
@@ -35,7 +41,14 @@ void my_connect_callback(struct mosquitto *mosq, void *userdata, int result)
     int i;
     if(!result){
         /* Subscribe to broker information topics on successful connect. */
-        mosquitto_subscribe(mosq, NULL, "CCYY ", 2);
+        mosquitto_subscribe(mosq, NULL, "arCondicionado ", 2);
+        mosquitto_subscribe(mosq, NULL, "alarme ", 2);
+        mosquitto_subscribe(mosq, NULL, "sensorPJ ", 2);
+        mosquitto_subscribe(mosq, NULL, "faixaOpI ", 2);
+        mosquitto_subscribe(mosq, NULL, "faixaOpS ", 2);
+        mosquitto_subscribe(mosq, NULL, "iluminacao1 ", 2);
+        mosquitto_subscribe(mosq, NULL, "iluminacao2 ", 2);
+        mosquitto_subscribe(mosq, NULL, "iluminacao3 ", 2);
     }else{
         fprintf(stderr, "Connect failed\n");
     }
@@ -111,26 +124,46 @@ int main(){
 
 
 
-    pinMode(,OUTPUT); // Saida geral, o que muda é a mensagem apresentada
+    //pinMode(,OUTPUT); // Saida geral, o que muda é a mensagem apresentada
+    
+    //display LCD
+    pinMode(25,OUTPUT); //RS
+    pinMode(,OUTPUT); //RW
+    pinMode(1,OUTPUT); //E
+    pinMode(12,OUTPUT); //D4
+    pinMode(16,OUTPUT); //D5
+    pinMode(20,OUTPUT); //D6
+    pinMode(21,OUTPUT); //D7    
 
     /*int entrada_alarme;
     int entrada_sensor_presenca;
     int entrada_sensot_PJ;
     int entrada_temperatura;*/
-    
+
+    int lcd;
+    wiringPiSetup();
+    lcd = lcdInit(2,16,4,digitalRead(25), digitalRead(1),digitalRead(12),digitalRead(16),digitalRead(20),digitalRead(21));
+    //lcdPuts(lcd,"mensagem a ser exibida"); 
+    sleep(2);
+    lcdClear(lcd);
+
     int horario;
     int faixa_operacao_S;
     int faixa_operacao_I;
     int temopar
 
     /*Lista de entradas do programa*/
-    int saida_iluminacao_interna;
-    int saida_Saida_alarme;
-    int saida_sensot_PJ;
-    int saida_ar_condicionado;
-    int saida_iluminacao_jardim;
-    int saida_iluminacao_Garagem;
+    char saida_iluminacao_internaL[] = "Luz ligada";
+    char saida_iluminacao_internaD[] = "Luz desligada";
+    char saida_Saida_alarmeL[] = "Alarme ligado";
+    char saida_Saida_alarmeD[] = "Alarme desligado";
+    char saida_ar_condicionadoL[] = "ar ligado";
+    char saida_ar_condicionadoD[] = "ar desligado";
 
+    char saida_sensot_PJ[] = "";
+    char saida_ar_condicionado[] = "";
+    char saida_iluminacao_jardim[] = "";
+    char saida_iluminacao_Garagem[] = "";
 
     //Para manter um loop infinito
     while(1){ 
@@ -138,30 +171,38 @@ int main(){
         //iluminacao_garagem
         if(digitalRead(27) == HIGH && !(horario > 6 && horario < 18)){
             saida_iluminacao_Garagem = 1;
+            lcdPuts(lcd,saida_iluminacao_internaL);
         }else{
             saida_iluminacao_Garagem = 0;
+            lcdPuts(lcd,saida_iluminacao_internaD);
         }
 
         //iluminacai_jardim
         if(horario >= 18 && horario <= 23){
             saida_iluminacao_jardim = 1;
+            lcdPuts(lcd,saida_iluminacao_internaL);
         }else{
             saida_iluminacao_jardim = 0;
+            lcdPuts(lcd,saida_iluminacao_internaD);
         }
 
 
         //iluminação interna
         if(digitalRead(27) == HIGH){
             saida_iluminacao_interna = 1;
+            lcdPuts(lcd,saida_iluminacao_internaL);
         }else{
             saida_iluminacao_interna = 0;
+            lcdPuts(lcd,saida_iluminacao_internaD);
         } 
 
         //alarme
         if((digitalRead(22) == HIGH)  || (digitalRead(27) == HIGH) && (digitalRead(4) == HIGH)){
             saida_Saida_alarme = 1;
+            lcdPuts(lcd,saida_Saida_alarmeL);
         }else{
             saida_Saida_alarme = 0;
+            lcdPuts(lcd,saida_Saida_alarmeD);
         } 
 
         //ar condicionado
@@ -172,16 +213,20 @@ int main(){
                 if(digitalRead(27) == HIGH){
                     if(entrada_temperatura <= faixa_operacao_I){
                         saida_ar_condicionado = 0;
+                        lcdPuts(lcd,saida_ar_condicionadoD);
                     }else if(entrada_temperatura >= faixa_operacao_S){
                         saida_ar_condicionado = 1;
+                        lcdPuts(lcd,saida_ar_condicionadoL);
                     }
                 }else{
                     saida_ar_condicionado = 0;
+                    lcdPuts(lcd,saida_ar_condicionadoD);
                 }
             }
             if(entrada_temperatura == 17){
                 saida_ar_condicionado = 0;
                 temopar = 0;
+                lcdPuts(lcd,saida_ar_condicionadoD);
             }
         }
 
