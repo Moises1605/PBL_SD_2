@@ -49,92 +49,22 @@ const static char* topic[TOPIC_NUM] = {
 
 }; 
 
-void my_message_callback(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *message){
-    
-    if(message->payloadlen){
-        printf("%s %s", message->topic, (char *)message->payload);
-    }else{
-        printf("%s (null)\n", message->topic);
-    }
-    fflush(stdout);
+int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
+    char* payload = message->payload;
+ 
+    /* Mostra a mensagem recebida */
+    printf("Mensagem recebida! \n\rTopico: %s Mensagem: %s\n", topicName, payload);
+ 
+    /* Faz echo da mensagem recebida */
+    publish(client, MQTT_PUBLISH_TOPIC, payload);
+ 
+    MQTTClient_freeMessage(&message);
+    MQTTClient_free(topicName);
+    return 1;
 }
-
-void my_connect_callback(struct mosquitto *mosq, void *userdata, int result){
-    int i;
-    if(!result){
-        /* Subscribe to broker information topics on successful connect. */
-        mosquitto_subscribe(mosq, NULL, "arCondicionado ", 2);
-        mosquitto_subscribe(mosq, NULL, "alarme ", 2);
-        mosquitto_subscribe(mosq, NULL, "sensorPJ ", 2);
-        mosquitto_subscribe(mosq, NULL, "faixaOpI ", 2);
-        mosquitto_subscribe(mosq, NULL, "faixaOpS ", 2);
-        mosquitto_subscribe(mosq, NULL, "iluminacao1 ", 2);
-        mosquitto_subscribe(mosq, NULL, "iluminacao2 ", 2);
-        mosquitto_subscribe(mosq, NULL, "iluminacao3 ", 2);
-    }else{
-        fprintf(stderr, "Connect failed\n");
-    }
-}
-
-void my_subscribe_callback(struct mosquitto *mosq, void *userdata, int mid, int qos_count, const int *granted_qos){
-    int i;
-    printf("Subscribed (mid: %d): %d", mid, granted_qos[0]);
-    for(i=1; i<qos_count; i++){
-        printf(", %d", granted_qos[i]);
-    }
-    printf("\n");
-}
-
-void my_log_callback(struct mosquitto *mosq, void *userdata, int level, const char *str){
-    /* Pring all log messages regardless of level. */
-    printf("%s\n", str);
-}
-
 
 int main(){ 
     
-    struct mosquitto *mosq = NULL;
-    char buff[MSG_MAX_SIZE];
-    
-    //Libmosquito library initialization
-    mosquitto_lib_init();
-    //Creating a mosquitto client
-    mosq = mosquitto_new(NULL,session,NULL);
-    if(!mosq){
-        printf("create client failed..\n");
-        mosquitto_lib_cleanup();
-        return 1;
-    }
-    //Set callback function, use when necessary
-    mosquitto_log_callback_set(mosq, my_log_callback);
-    mosquitto_connect_callback_set(mosq, my_connect_callback);
-    mosquitto_message_callback_set(mosq, my_message_callback);
-    mosquitto_subscribe_callback_set(mosq, my_subscribe_callback);
-    
-
-    //Connect to server
-    if(mosquitto_connect(mosq, HOST, PORT, KEEP_ALIVE)){
-        fprintf(stderr, "Unable to connect.\n");
-        return 1;
-    }
-    //Start a thread, and call mosquitto? Loop() continuously in the thread to process network information
-    int loop = mosquitto_loop_start(mosq); 
-    if(loop != MOSQ_ERR_SUCCESS)
-    {
-        printf("mosquitto loop error\n");
-        return 1;
-    }
-
-
-    while(fgets(buff, MSG_MAX_SIZE, stdin) != NULL)
-    {
-        /*Publish news*/
-        mosquitto_publish(mosq,NULL,"ycy ",strlen(buff)+1,buff,0,0);
-        memset(buff,0,sizeof(buff));
-    }
-
-    mosquitto_destroy(mosq);
-    mosquitto_lib_cleanup();
 
     int lcd;
     wiringPiSetupGpio();
@@ -170,20 +100,25 @@ int main(){
     char saida_iluminacao_Garagem[] = "";
 
     //Para manter um loop infinito
+    MQTTClient_setCallbacks(client, NULL, NULL, on_message, NULL);
     while(1){ 
 
         //iluminacao_garagem
         if(digitalRead(27) == HIGH && !(horario > 6 && horario < 18)){
             saida_iluminacao_Garagem = 1;
+            MQTTPublish(TOPIC_LUZ_Garagem, "test maqiatto.com!");
         }else{
             saida_iluminacao_Garagem = 0;
+            MQTTPublish(TOPIC_LUZ_Jardim, "test maqiatto.com!");
         }
 
         //iluminacai_jardim
         if(horario >= 18 && horario <= 23){
             saida_iluminacao_jardim = 1;
+            MQTTPublish(TOPIC, "test maqiatto.com!");
         }else{
             saida_iluminacao_jardim = 0;
+            MQTTPublish(TOPIC, "test maqiatto.com!");
         }
 
 
@@ -191,35 +126,44 @@ int main(){
         if(digitalRead(27) == HIGH){
             saida_iluminacao_interna = 1;
             saida_iluminacao_interna = "Luz L"
+            MQTTPublish(TOPIC, "test maqiatto.com!");
         }else{
             saida_iluminacao_interna = 0;
             saida_iluminacao_interna = "Luz D"
+            MQTTPublish(TOPIC, "test maqiatto.com!");
         } 
 
         //alarme
         if((digitalRead(22) == HIGH)  || (digitalRead(27) == HIGH) && (digitalRead(4) == HIGH)){
             saida_Saida_alarme = "Alarme L";
+            MQTTPublish(TOPIC, "test maqiatto.com!");
         }else{
             saida_Saida_alarme = "Alarme D";
+            MQTTPublish(TOPIC, "test maqiatto.com!");
         } 
 
         //ar condicionado
         if(temopar){
             if(faixa_operacao_I >= faixa_operacao_S){
                 saida_ar_condicionado = "ar D";
+                MQTTPublish(TOPIC, "test maqiatto.com!");
             }else{
                 if(digitalRead(27) == HIGH){
                     if(entrada_temperatura <= faixa_operacao_I){
                         saida_ar_condicionado = "ar D";
+                        MQTTPublish(TOPIC, "test maqiatto.com!");
                     }else if(entrada_temperatura >= faixa_operacao_S){
                         saida_ar_condicionado = "ar L";
+                        MQTTPublish(TOPIC, "test maqiatto.com!");
                     }
                 }else{
                     saida_ar_condicionado = "ar D";
+                    MQTTPublish(TOPIC, "test maqiatto.com!");
                 }
             }
             if(entrada_temperatura == 17){
                 saida_ar_condicionado = "ar D";
+                MQTTPublish(TOPIC, "test maqiatto.com!");
                 temopar = 0;
                 
             }
