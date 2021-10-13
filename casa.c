@@ -20,12 +20,6 @@ apresentar no mínimo:
 #include <mosquitto.h>
 #include <string.h> 
 
-#define HOST "localhost"
-#define PORT  1883
-#define KEEP_ALIVE 60
-#define MSG_MAX_SIZE  512
-#define TOPIC_NUM 3 
-
 //Entradas DIP SWICTH
 #define DIP_1 4
 #define DIP_2 17
@@ -89,23 +83,21 @@ char saida_iluminacao_Garagem[] = "";
 int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
     char* payload = message->payload;
 
-    if(topicName == "arCondicionado"){
-        saida_ar_condicionado = message->payload;
-    }else if(topicName == "alarme"){
+    if(topicName == TOPIC_Alarme_P){
         saida_Saida_alarme = message->payload;
-    }else if(topicName == "faixaOpI"){
+    }else if(topicName == TOPIC_faixaOPI_P){
         faixa_operacao_inferior =  atof(message->payload);
-    }else if(topicName == "faixaOpS"){
+    }else if(topicName == TOPIC_faixaOPS_P){
         faixa_operacao_superior = atof(message->payload);
-    }else if(topicName == "iluminacaoInterna"){
+    }else if(topicName == TOPIC_ILUMINACAO_INTERNA){ //Nome para printar
         saida_iluminacao_interna = message->payload;
-    }else if(topicName == "sensorPJ"){
+    }/*else if(topicName == "sensorPJ"){
         sensor_PJ = message->payload - '0';
     }else if(topicName == "sensorPresenca"){
         sensor_presenca = message->payload - '0';
-    }else if(topicName == "estadoIlumincaoInterna"){
+    }*/else if(topicName == TOPIC_EST_ILUMINACAO_INTERNA){
         entrada_iluminacao_interna = message->payload - '0';
-    }else if(topicName == "estadoAlarme"){
+    }else if(topicName == TOPIC_ESTADO_ALARME){
         entrada_alarme = message->payload - '0';
     }
  

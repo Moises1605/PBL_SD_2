@@ -11,6 +11,32 @@
  * For example mine is : cadominna@gmail.com/topic1
  * To add topics, see https://www.maqiatto.com/configure
  */
-#define TOPIC    "moisesalmeida123_@hotmail.com/teste"
+
+//Tópicos utilizados pelo site
+#define TOPIC                           "moisesalmeida123_@hotmail.com/teste"
+#define TOPIC_TEMPERATURA               "moisesalmeida123_@hotmail.com/temperaturaS"
+#define TOPIC_OPERACAO_INFERIOR         "moisesalmeida123_@hotmail.com/operacaoIS"
+#define TOPIC_OPERACAO_SUPERIOR         "moisesalmeida123_@hotmail.com/operacaoSS"
+#define TOPIC_LUZ_GARAGEM               "moisesalmeida123_@hotmail.com/luzGaragemS"
+#define TOPIC_LUZ_JARDIM                "moisesalmeida123_@hotmail.com/luzJardimS"
+#define TOPIC_LUZ_INTERNA               "moisesalmeida123_@hotmail.com/luzInternaS"
+#define TOPIC_ALARME                    "moisesalmeida123_@hotmail.com/AlarmeS"
+#define TOPIC_ARCONDICIONADO            "moisesalmeida123_@hotmail.com/arcondicionadoS" 
+
+
+//Tópicos utilizados pela placa
+#define TOPIC_Alarme_P                  "moisesalmeida123_@hotmail.com/alarmeP"
+#define TOPIC_faixaOPI_P                "moisesalmeida123_@hotmail.com/faixaOpIP"
+#define TOPIC_faixaOPS_P                "moisesalmeida123_@hotmail.com/faixaOpSP"
+#define TOPIC_ILUMINACAO_INTERNA        "moisesalmeida123_@hotmail.com/iluminacaoInternaP"
+#define TOPIC_EST_ILUMINACAO_INTERNA    "moisesalmeida123_@hotmail.com/estIlumincaoInternaP"
+#define TOPIC_ESTADO_ALARME             "moisesalmeida123_@hotmail.com/estadoAlarme"
 
 #endif /* LINUX_CREDENTIALS */
+
+
+
+
+
+
+
