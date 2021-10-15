@@ -14,7 +14,7 @@ Get MQTT client library :
 NOTE: Your system may need to have OpenSSL and Curl libraries. If necessary type them :
   
     sudo apt-get install libssl-dev
-    sudo apt-get install libcurl4-openssl-dev
+    sudo apt-get install libcurl4-openssl-dev    
   
 Go for client code :
   

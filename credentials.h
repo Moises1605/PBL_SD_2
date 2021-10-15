@@ -2,7 +2,7 @@
 #define LINUX_CREDENTIALS
 
 /* Provide MQTT broker credentials as denoted in maqiatto.com. */
-#define CLIENTID        "hiaguinho"
+#define CLIENTID        "clientePlaca"
 #define BROKER_ADDR     "maqiatto.com"
 #define USERNAME        "moisesalmeida123_@hotmail.com"
 #define PASSWORD        "pblsd"

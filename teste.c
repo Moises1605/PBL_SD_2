@@ -77,8 +77,8 @@ int main()
         lcdPosition(lcd, 5, 0);
         lcdPuts(lcd,"Luz L");
         lcdPosition(lcd, 0, 1);
-        lcdPuts(lcd,"Alarme L");
-        lcdPosition(lcd, 0, 0);
+        lcdPuts(lcd,"Alarme L"); //delay
+        lcdPosition(lcd, 0, 0); //protocolo i2c //nilton braga // 0 -- 3000 e pouco 14bits
     }
     return 0;
 }

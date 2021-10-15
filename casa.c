@@ -17,7 +17,7 @@ apresentar no mínimo:
 #include <stdlib.h> 
 #include <wiringPi.h>
 #include <lcd.h>
-#include <mosquitto.h>
+//#include <mosquitto.h>
 #include <string.h> 
 
 //Entradas DIP SWICTH
@@ -150,10 +150,11 @@ int main(){
     MQTTClient_setCallbacks(client, NULL, NULL, on_message, NULL);
     while(1){ 
         entrada_temperatura = digitalRead(POTEN_SDA) * 10;
-        if(BUTTON_1 == HIGH){
+        if(BUTTON_1 == LOW){
             entrada_temperatura = digitalRead(POTEN_SCL) * 10;
         }
-        if(BUTTON_2){
+
+        if(BUTTON_2 == LOW){
             entrada_temperatura = digitalRead(POTEN_SCL) * 10;
         }
         
@@ -243,11 +244,13 @@ int main(){
         lcdClear(lcd);
         lcdPosition(lcd, 0, 0);
         lcdPuts(lcd,saida_ar_condicionado);
+        sleep(3000);
         lcdPosition(lcd, 5, 0);
         lcdPuts(lcd,saida_iluminacao_interna);
+        sleep(3000);
         lcdPosition(lcd, 0, 1);
         lcdPuts(lcd,saida_Saida_alarme);
-        sleep(5000 / 1000);
+        sleep(5000);
         /*Por padrão, o texto é impresso na tela na linha superior, segunda coluna. Para alterar a posição, use 
         lcdPosition (lcd, COLUMN, ROW).Em um LCD 16 × 2, as linhas são numeradas de 0 a 1 e as colunas são numeradas de 0 a 15.*/
     }
