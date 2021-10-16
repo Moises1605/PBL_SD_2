@@ -33,16 +33,16 @@ char saida_ar_condicionado[];
 /*Lista de entradas do programa*/
 int sensor_PJ = 0;
 int sensor_presenca;
-float entrada_temperatura = 17;
-float faixa_operacao_inferior = 17;
-float faixa_operacao_superior = 23;
+char* entrada_temperatura;
+char* faixa_operacao_inferior;
+char* faixa_operacao_superior;
 char* entrada_iluminacao_interna;
 char* entrada_alarme;
 
 
-char saida_ar_condicionado[];
-char saida_iluminacao_jardim[];
-char saida_iluminacao_Garagem[];
+char* saida_ar_condicionado;
+char* saida_iluminacao_jardim;
+char* saida_iluminacao_Garagem;
 
 
 
@@ -199,13 +199,11 @@ int main(){
     
     MQTTBegin();
 
-    MQTTSubscribe(TOPIC_ENTRADA_ILUMINACAO_I);
-    MQTTSubscribe(TOPIC_ENTRADA_ALARME);
-    MQTTSubscribe(TOPIC_ENTRADA_FAIXA_S);
-    MQTTSubscribe(TOPIC_ENTRADA_FAIXA_I);
+    MQTTSubscribe(TOPIC_ILUMINACAO_INTERNA);
+    MQTTSubscribe(TOPIC_Alarme_P);
+    MQTTSubscribe(TOPIC_faixaOPI_P);
+    MQTTSubscribe(TOPIC_faixaOPS_P);
     
-
-    int lcd;
     wiringPiSetupGpio();
     /*Lista de entradas do programa*/ 
     pinMode(DIP_1,INPUT); // alarme
@@ -269,18 +267,18 @@ int main(){
 
 
         //iluminação interna
-        if(digitalRead(DIP_2) == HIGH || entrada_iluminacao_interna == 1 /*|| sensor_presenca == 1*/){
+        if(digitalRead(DIP_2) == HIGH || entrada_iluminacao_interna == '1' /*|| sensor_presenca == 1*/){
             //saida_iluminacao_interna = 1;
-            saida_iluminacao_interna = "Luz L"
+            saida_iluminacao_interna = "Luz L";
             MQTTPublish(TOPIC_LUZ_INTERNA, "ligado");
         }else{
             //saida_iluminacao_interna = 0;
-            saida_iluminacao_interna = "Luz D"
+            saida_iluminacao_interna = "Luz D";
             MQTTPublish(TOPIC_LUZ_INTERNA, "desligado");
         } 
 
         //alarme
-        if(((digitalRead(DIP_1) == HIGH) || entrada_alarme == 1) || (digitalRead(DIP_2) == HIGH /*|| sensor_presenca == 1*/) && (digitalRead(DIP_3) == HIGH)){
+        if(((digitalRead(DIP_1) == HIGH) || entrada_alarme == '1') || (digitalRead(DIP_2) == HIGH /*|| sensor_presenca == 1*/) && (digitalRead(DIP_3) == HIGH)){
             saida_Saida_alarme = "Alarme L";
             MQTTPublish(TOPIC_ALARME, "ligado");
         }else{
