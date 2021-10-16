@@ -19,6 +19,8 @@ apresentar no mínimo:
 //#include <lcd.h>
 //#include <mosquitto.h>
 #include <string.h> 
+#include "mqtt.h"
+#include "credentials.h"
 
 //Entradas DIP SWICTH
 #define DIP_1 4

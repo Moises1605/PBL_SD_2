@@ -13,6 +13,7 @@
  */
 
 //Tópicos utilizados pelo site
+#define TOPICC                           "moisesalmeida123_@hotmail.com/opaa"
 #define TOPIC                           "moisesalmeida123_@hotmail.com/teste"
 #define TOPIC_TEMPERATURA               "moisesalmeida123_@hotmail.com/temperaturaS"
 #define TOPIC_OPERACAO_INFERIOR         "moisesalmeida123_@hotmail.com/operacaoIS"
@@ -21,7 +22,7 @@
 #define TOPIC_LUZ_JARDIM                "moisesalmeida123_@hotmail.com/luzJardimS"
 #define TOPIC_LUZ_INTERNA               "moisesalmeida123_@hotmail.com/luzInternaS"
 #define TOPIC_ALARME                    "moisesalmeida123_@hotmail.com/AlarmeS"
-#define TOPIC_ARCONDICIONADO            "moisesalmeida123_@hotmail.com/arcondicionadoS" 
+#define TOPIC_ARCONDICIONADO            "moisesalmeida123_@hotmail.com/arcondicionados" 
 
 
 //Tópicos utilizados pela placa

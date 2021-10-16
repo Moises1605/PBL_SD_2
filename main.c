@@ -16,11 +16,11 @@ int main(int argc, char* argv[])
 {
     MQTTBegin();
 
-    MQTTSubscribe(TOPIC);
+    MQTTSubscribe(TOPIC_ARCONDICIONADO);
 
     while(1) 
     {
-        MQTTPublish(TOPIC, "test maqiatto.com!");
+        MQTTPublish(TOPIC_ARCONDICIONADO, "test maqiatto.com!");
         sleep(TOUT_TO_PUBLISH / 1000);
     };
 

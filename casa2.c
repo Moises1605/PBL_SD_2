@@ -18,6 +18,9 @@ apresentar no mínimo:
 //#include <mosquitto.h>
 #include <string.h> 
 
+#include "mqtt.h"
+#include "credentials.h"
+
 //Entradas DIP SWICTH
 #define DIP_1 4
 #define DIP_2 17
@@ -41,8 +44,6 @@ apresentar no mínimo:
 #define LCD_D5  16 
 #define LCD_D6  20
 #define LCD_D7  21
-
-bool session = true;
 
 /*const static char* topic[TOPIC_NUM] = {
     "arCondicionado",
@@ -77,48 +78,15 @@ char saida_iluminacao_jardim[] = "";
 char saida_iluminacao_Garagem[] = "";
 
 
-
-int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
-    char* payload = message->payload;
-
-    if(topicName == TOPIC_Alarme_P){
-        saida_Saida_alarme = message->payload;
-    }else if(topicName == TOPIC_faixaOPI_P){
-        faixa_operacao_inferior =  atof(message->payload);
-    }else if(topicName == TOPIC_faixaOPS_P){
-        faixa_operacao_superior = atof(message->payload);
-    }else if(topicName == TOPIC_ILUMINACAO_INTERNA){ //Nome para printar
-        saida_iluminacao_interna = message->payload;
-    }/*else if(topicName == "sensorPJ"){
-        sensor_PJ = message->payload - '0';
-    }else if(topicName == "sensorPresenca"){
-        sensor_presenca = message->payload - '0';
-    }*/else if(topicName == TOPIC_EST_ILUMINACAO_INTERNA){
-        entrada_iluminacao_interna = message->payload - '0';
-    }else if(topicName == TOPIC_ESTADO_ALARME){
-        entrada_alarme = message->payload - '0';
-    }
- 
-    /* Mostra a mensagem recebida */
-    printf("Mensagem recebida! \n\rTopico: %s Mensagem: %s\n", topicName, payload);
- 
-    /* Faz echo da mensagem recebida */
-    publish(client, MQTT_PUBLISH_TOPIC, payload);
- 
-    MQTTClient_freeMessage(&message);
-    MQTTClient_free(topicName);
-    return 1;
-}
-
 int main(){ 
     
     MQTTBegin();
 
-    MQTTSubscribe(TOPIC_ENTRADA_ILUMINACAO_I);
-    MQTTSubscribe(TOPIC_ENTRADA_ALARME);
-    MQTTSubscribe(TOPIC_ENTRADA_FAIXA_S);
-    MQTTSubscribe(TOPIC_ENTRADA_FAIXA_I);
-    
+    //MQTTSubscribe(TOPIC_LUZ_INTERNA);
+    //MQTTSubscribe(TOPIC_ALARME);
+    //MQTTSubscribe(TOPIC_OPERACAO_SUPERIOR);
+    //MQTTSubscribe(TOPIC_OPERACAO_INFERIOR);
+    MQTTSubscribe("moisesalmeida123_@hotmail.com/alarmeP");
 
     int lcd;
     int horario;
@@ -128,11 +96,10 @@ int main(){
     int timeout;
 
     //Para receber as atualizações do site.
-    MQTTClient_setCallbacks(client, NULL, NULL, on_message, NULL);
-    //Para manter um loop infinito
+        //Para manter um loop infinito
     while(1){ 
-        MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
-
+        MQTTPublish("moisesalmeida123_@hotmail.com/alarmeP", "desligado");
+        sleep(5000 / 1000);
         //printar mensagens no lcd
         /*Por padrão, o texto é impresso na tela na linha superior, segunda coluna. Para alterar a posição, use 
         lcdPosition (lcd, COLUMN, ROW).Em um LCD 16 × 2, as linhas são numeradas de 0 a 1 e as colunas são numeradas de 0 a 15.*/
