@@ -15,8 +15,8 @@ apresentar no mínimo:
 
 #include <stdio.h>
 #include <stdlib.h> 
-#include <wiringPi.h>
-#include <lcd.h>
+//#include <wiringPi.h>
+//#include <lcd.h>
 //#include <mosquitto.h>
 #include <string.h> 
 
@@ -46,7 +46,7 @@ apresentar no mínimo:
 
 bool session = true;
 
-const static char* topic[TOPIC_NUM] = {
+/*const static char* topic[TOPIC_NUM] = {
     "arCondicionado",
     "alarme ",
     "sensorPJ ",
@@ -57,7 +57,7 @@ const static char* topic[TOPIC_NUM] = {
     "temperatura",
     "iluminacaoGaragem",
     "iluminacaoJardim"
-};
+};*/
 
 
 char saida_iluminacao_interna[];
@@ -146,9 +146,11 @@ int main(){
     int temopar;
     int timeout;
 
-    //Para manter um loop infinito
+    //Para receber as atualizações do site.
     MQTTClient_setCallbacks(client, NULL, NULL, on_message, NULL);
+    //Para manter um loop infinito
     while(1){ 
+
         entrada_temperatura = digitalRead(POTEN_SDA) * 10;
         if(BUTTON_1 == LOW){
             entrada_temperatura = digitalRead(POTEN_SCL) * 10;
@@ -165,7 +167,7 @@ int main(){
 
 
         //iluminacao_garagem
-        if((digitalRead(DIP_2) == HIGH || sensor_presenca == 1) && !(horario > 6 && horario < 18)){
+        if((digitalRead(DIP_2) == HIGH /*|| sensor_presenca == 1*/) && !(horario > 6 && horario < 18)){
             //saida_iluminacao_Garagem = 1;
             MQTTPublish(TOPIC_LUZ_GARAGEM, "ligado");
         }else{
@@ -184,7 +186,7 @@ int main(){
 
 
         //iluminação interna
-        if(digitalRead(DIP_2) == HIGH || entrada_iluminacao_interna == 1){
+        if(digitalRead(DIP_2) == HIGH || entrada_iluminacao_interna == 1 /*|| sensor_presenca == 1*/){
             //saida_iluminacao_interna = 1;
             saida_iluminacao_interna = "Luz L"
             MQTTPublish(TOPIC_LUZ_INTERNA, "ligado");
@@ -195,8 +197,7 @@ int main(){
         } 
 
         //alarme
-        if((digitalRead(DIP_1) == HIGH) || (digitalRead(DIP_2) == HIGH || entrada_alarme == 1 || 
-            sensor_PJ == 1) && (digitalRead(DIP_3) == HIGH)){
+        if(((digitalRead(DIP_1) == HIGH) || entrada_alarme == 1) || (digitalRead(DIP_2) == HIGH /*|| sensor_presenca == 1*/) && (digitalRead(DIP_3) == HIGH)){
             saida_Saida_alarme = "Alarme L";
             MQTTPublish(TOPIC_ALARME, "ligado");
         }else{
@@ -205,7 +206,7 @@ int main(){
         } 
 
         //ar condicionado
-        if(temopar){
+        //if(temopar){
             if(faixa_operacao_inferior >= faixa_operacao_superior){
                 saida_ar_condicionado = "ar D";
                 MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
@@ -229,7 +230,7 @@ int main(){
                 temopar = 0;
                 
             }
-        }
+        //}
 
         if(timeout){
             temopar = 1;

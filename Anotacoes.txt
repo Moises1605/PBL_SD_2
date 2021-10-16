@@ -1,0 +1,3 @@
+http://www.hivemq.com/demos/websocket-client/ 
+
+gcc -o mqttConnect main.c mqtt.c -I. -lcurl -lpaho-mqtt3c -lpthread
