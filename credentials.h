@@ -22,7 +22,7 @@
 #define TOPIC_LUZ_JARDIM                "moisesalmeida123_@hotmail.com/luzJardimS"
 #define TOPIC_LUZ_INTERNA               "moisesalmeida123_@hotmail.com/luzInternaS"
 #define TOPIC_ALARME                    "moisesalmeida123_@hotmail.com/AlarmeS"
-#define TOPIC_ARCONDICIONADO            "moisesalmeida123_@hotmail.com/arcondicionados" 
+#define TOPIC_ARCONDICIONADO            "moisesalmeida123_@hotmail.com/arcondicionadoS" 
 
 
 //Tópicos utilizados pela placa
@@ -31,7 +31,7 @@
 #define TOPIC_faixaOPS_P                "moisesalmeida123_@hotmail.com/faixaOpSP"
 #define TOPIC_ILUMINACAO_INTERNA        "moisesalmeida123_@hotmail.com/iluminacaoInternaP"
 #define TOPIC_EST_ILUMINACAO_INTERNA    "moisesalmeida123_@hotmail.com/estIlumincaoInternaP"
-#define TOPIC_ESTADO_ALARME             "moisesalmeida123_@hotmail.com/estadoAlarme"
+#define TOPIC_ESTADO_ALARME             "moisesalmeida123_@hotmail.com/estadoAlarmeP"
 
 #endif /* LINUX_CREDENTIALS */
 

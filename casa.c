@@ -15,12 +15,148 @@ apresentar no mínimo:
 
 #include <stdio.h>
 #include <stdlib.h> 
-//#include <wiringPi.h>
-//#include <lcd.h>
-//#include <mosquitto.h>
+#include <unistd.h>
+#include <wiringPi.h>
+#include <lcd.h>
+#include <mosquitto.h>
 #include <string.h> 
 #include "mqtt.h"
 #include "credentials.h"
+#include "MQTTClient.h"
+
+MQTTClient client;
+
+char* saida_iluminacao_interna;
+char* saida_Saida_alarme;
+char saida_ar_condicionado[];
+
+/*Lista de entradas do programa*/
+int sensor_PJ = 0;
+int sensor_presenca;
+float entrada_temperatura = 17;
+float faixa_operacao_inferior = 17;
+float faixa_operacao_superior = 23;
+char* entrada_iluminacao_interna;
+char* entrada_alarme;
+
+
+char saida_ar_condicionado[];
+char saida_iluminacao_jardim[];
+char saida_iluminacao_Garagem[];
+
+
+
+/* Subscribed MQTT topic listener function. */
+int msgarrvd(void *context, char *topicName, int topicLen, MQTTClient_message *message)
+{
+    if(message) {
+        printf("Message arrived\n");
+        printf("  topic: %s\n", topicName);
+        printf("  message: ");
+        printf("%s\n", (char*)message->payload);
+    }
+
+    MQTTClient_freeMessage(&message);
+    MQTTClient_free(topicName);
+
+    return 1;
+}
+
+int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
+
+    if(message) {
+        printf("Mensagem chegou\n");
+        printf("  No topico: %s\n", topicName);
+        printf("  A mensagem: ");
+        printf("%s\n", (char*)message->payload);
+
+        char* payload = message->payload;
+
+        if(topicName == TOPIC_Alarme_P){
+            saida_Saida_alarme = payload;
+        }else if(topicName == TOPIC_faixaOPI_P){
+            faixa_operacao_inferior =  atof((char*)message->payload);
+        }else if(topicName == TOPIC_faixaOPS_P){
+            faixa_operacao_superior = atof((char*)message->payload);
+        }else if(topicName == TOPIC_ILUMINACAO_INTERNA){ //Nome para printar
+            saida_iluminacao_interna = (char*)message->payload;
+        }/*else if(topicName == "sensorPJ"){
+            sensor_PJ = message->payload - '0';
+        }else if(topicName == "sensorPresenca"){
+            sensor_presenca = message->payload - '0';
+        }*/else if(topicName == TOPIC_EST_ILUMINACAO_INTERNA){
+            entrada_iluminacao_interna = (char*)message->payload - '0';
+        }else if(topicName == TOPIC_ESTADO_ALARME){
+            entrada_alarme = (char*)message->payload - '0';
+        } 
+    }
+
+    MQTTClient_freeMessage(&message);
+    MQTTClient_free(topicName);
+
+    return 1;
+}
+
+void connlost(void *context, char *cause)
+{
+    printf("Connection lost\n");
+    if (cause)
+        printf("Reason is : %s\n", cause);
+    MQTTDisconnect();
+    /* Force to reconnect! */
+    MQTTBegin();
+}
+
+void MQTTSubscribe(const char* topic)
+{
+    printf("Subscribing to topic %s for client %s using QoS%d\n\n", 
+        topic, CLIENTID, QOS);
+    MQTTClient_subscribe(client, topic, QOS);
+}
+
+void MQTTPublish(const char* topic, char* message)
+{
+    MQTTClient_message pubmsg = MQTTClient_message_initializer;
+    MQTTClient_deliveryToken token;
+    pubmsg.payload = message;
+    pubmsg.payloadlen = (int)strlen(message);
+    pubmsg.qos = QOS;
+    pubmsg.retained = 1;
+    MQTTClient_publishMessage(client, topic, &pubmsg, &token);
+    /*printf("Waiting for publication of message: %s\n"
+            "topic: %s\n client: %s\n",
+            message, TOPIC, CLIENTID);*/
+    int rc = MQTTClient_waitForCompletion(client, token, 1000);
+    /*printf("Message with delivery token %d delivered\n", token);*/
+}
+
+void MQTTDisconnect()
+{
+    MQTTClient_disconnect(client, TIMEOUT);
+    MQTTClient_destroy(&client);
+}
+
+void MQTTBegin()
+{
+    int rc = -1;
+    printf("Initializing MQTT...\n");
+    MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
+    conn_opts.keepAliveInterval = KEEP_ALIVE;
+    conn_opts.cleansession = 1;
+    conn_opts.username = USERNAME;
+    conn_opts.password = PASSWORD;
+    MQTTClient_create(&client, BROKER_ADDR, CLIENTID,
+        MQTTCLIENT_PERSISTENCE_NONE, NULL);
+
+    /* Set connection, subscribe and publish callbacks. */
+    MQTTClient_setCallbacks(client, NULL, connlost, on_message, NULL);
+
+    while ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
+    {
+        printf("Failed to connect, return code %d\n", rc);
+        sleep(TIMEOUT / 1000); 
+    }
+}
 
 //Entradas DIP SWICTH
 #define DIP_1 4
@@ -46,8 +182,6 @@ apresentar no mínimo:
 #define LCD_D6  20
 #define LCD_D7  21
 
-bool session = true;
-
 /*const static char* topic[TOPIC_NUM] = {
     "arCondicionado",
     "alarme ",
@@ -60,59 +194,6 @@ bool session = true;
     "iluminacaoGaragem",
     "iluminacaoJardim"
 };*/
-
-
-char saida_iluminacao_interna[];
-char saida_Saida_alarme[];
-char saida_ar_condicionado[];
-
-/*Lista de entradas do programa*/
-int sensor_PJ[];
-int sensor_presenca;
-float entrada_temperatura = 17;
-float faixa_operacao_inferior = 17;
-float faixa_operacao_superior = 23;
-int entrada_iluminacao_interna;
-int entrada_alarme;
-
-
-char saida_ar_condicionado[] = "";
-char saida_iluminacao_jardim[] = "";
-char saida_iluminacao_Garagem[] = "";
-
-
-
-int on_message(void *context, char *topicName, int topicLen, MQTTClient_message *message) {
-    char* payload = message->payload;
-
-    if(topicName == TOPIC_Alarme_P){
-        saida_Saida_alarme = message->payload;
-    }else if(topicName == TOPIC_faixaOPI_P){
-        faixa_operacao_inferior =  atof(message->payload);
-    }else if(topicName == TOPIC_faixaOPS_P){
-        faixa_operacao_superior = atof(message->payload);
-    }else if(topicName == TOPIC_ILUMINACAO_INTERNA){ //Nome para printar
-        saida_iluminacao_interna = message->payload;
-    }/*else if(topicName == "sensorPJ"){
-        sensor_PJ = message->payload - '0';
-    }else if(topicName == "sensorPresenca"){
-        sensor_presenca = message->payload - '0';
-    }*/else if(topicName == TOPIC_EST_ILUMINACAO_INTERNA){
-        entrada_iluminacao_interna = message->payload - '0';
-    }else if(topicName == TOPIC_ESTADO_ALARME){
-        entrada_alarme = message->payload - '0';
-    }
- 
-    /* Mostra a mensagem recebida */
-    printf("Mensagem recebida! \n\rTopico: %s Mensagem: %s\n", topicName, payload);
- 
-    /* Faz echo da mensagem recebida */
-    publish(client, MQTT_PUBLISH_TOPIC, payload);
- 
-    MQTTClient_freeMessage(&message);
-    MQTTClient_free(topicName);
-    return 1;
-}
 
 int main(){ 
     
