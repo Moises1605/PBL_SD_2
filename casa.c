@@ -55,7 +55,7 @@ char* saida_Saida_alarme;
 /*Lista de entradas do programa*/
 int sensor_PJ = 0;
 int sensor_presenca = 0;
-char* entrada_temperatura;
+char* entrada_temperatura = "19";
 char* faixa_operacao_inferior;
 char* faixa_operacao_superior;
 char* entrada_iluminacao_interna;
@@ -97,9 +97,9 @@ int on_message(void *context, char *topicName, int topicLen, MQTTClient_message 
         if(topicName == TOPIC_Alarme_P){
             saida_Saida_alarme = payload;
         }else if(topicName == TOPIC_faixaOPI_P){
-            faixa_operacao_inferior =  atof((char*)message->payload);
+            faixa_operacao_inferior =  (char*)message->payload;
         }else if(topicName == TOPIC_faixaOPS_P){
-            faixa_operacao_superior = atof((char*)message->payload);
+            faixa_operacao_superior = (char*)message->payload;
         }else if(topicName == TOPIC_ILUMINACAO_INTERNA){ //Nome para printar
             saida_iluminacao_interna = (char*)message->payload;
         }/*else if(topicName == "sensorPJ"){
@@ -213,7 +213,7 @@ int main(){
     int temopar =1;
     int timeout = 2;
     char texto_lcd[100];
-
+    
     //Para manter um loop infinito
     while(1){ 
 
@@ -228,8 +228,8 @@ int main(){
         
         //fazer a conversão de tipos para esses valores
         MQTTPublish(TOPIC_TEMPERATURA, entrada_temperatura);
-        MQTTPublish(TOPIC_OPERACAO_INFERIOR, faixa_operacao_inferior);
-        MQTTPublish(TOPIC_OPERACAO_SUPERIOR, faixa_operacao_superior);
+        MQTTPublish(TOPIC_OPERACAO_INFERIOR, "17");
+        MQTTPublish(TOPIC_OPERACAO_SUPERIOR, "23");
 
 
         //iluminacao_garagem
@@ -273,15 +273,15 @@ int main(){
 
         //ar condicionado
         //if(temopar){
-            if(faixa_operacao_inferior >= faixa_operacao_superior){
+            if(faixa_operacao_I >= faixa_operacao_S){
                 saida_ar_condicionado = "ar D";
                 MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
             }else{
                 if(digitalRead(DIP_2) == HIGH){
-                    if(entrada_temperatura <= faixa_operacao_inferior){
+                    if(entrada_temperatura <= faixa_operacao_I){
                         saida_ar_condicionado = "ar D";
                         MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
-                    }else if(entrada_temperatura >= faixa_operacao_superior){
+                    }else if(entrada_temperatura >= faixa_operacao_S){
                         saida_ar_condicionado = "ar L";
                         MQTTPublish(TOPIC_ARCONDICIONADO, "ligado");
                     }
