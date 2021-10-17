@@ -18,21 +18,43 @@ apresentar no mínimo:
 #include <unistd.h>
 #include <wiringPi.h>
 #include <lcd.h>
-#include <mosquitto.h>
 #include <string.h> 
 #include "mqtt.h"
 #include "credentials.h"
 #include "MQTTClient.h"
 
+//Entradas DIP SWICTH
+#define DIP_1 4
+#define DIP_2 17
+#define DIP_3 27
+#define DIP_4 22
+
+//Entradas Botões
+#define BUTTON_1 5
+#define BUTTON_2 19
+#define BUTTON_3 26
+
+
+//Entradas Potenciomentto
+#define POTEN_SDA 2
+#define POTEN_SCL 3
+
+//Saidas LCD
+#define LCD_RS  25 
+#define LCD_E   1  
+#define LCD_D4  12 
+#define LCD_D5  16 
+#define LCD_D6  20
+#define LCD_D7  21
+
 MQTTClient client;
 
 char* saida_iluminacao_interna;
 char* saida_Saida_alarme;
-char saida_ar_condicionado[];
 
 /*Lista de entradas do programa*/
 int sensor_PJ = 0;
-int sensor_presenca;
+int sensor_presenca = 0;
 char* entrada_temperatura;
 char* faixa_operacao_inferior;
 char* faixa_operacao_superior;
@@ -85,9 +107,9 @@ int on_message(void *context, char *topicName, int topicLen, MQTTClient_message 
         }else if(topicName == "sensorPresenca"){
             sensor_presenca = message->payload - '0';
         }*/else if(topicName == TOPIC_EST_ILUMINACAO_INTERNA){
-            entrada_iluminacao_interna = (char*)message->payload - '0';
+            entrada_iluminacao_interna = (char*)message->payload;
         }else if(topicName == TOPIC_ESTADO_ALARME){
-            entrada_alarme = (char*)message->payload - '0';
+            entrada_alarme = (char*)message->payload;
         } 
     }
 
@@ -158,43 +180,6 @@ void MQTTBegin()
     }
 }
 
-//Entradas DIP SWICTH
-#define DIP_1 4
-#define DIP_2 17
-#define DIP_3 27
-#define DIP_4 22
-
-//Entradas Botões
-#define BUTTON_1 5
-#define BUTTON_2 19
-#define BUTTON_3 26
-
-
-//Entradas Potenciomentto
-#define POTEN_SDA 2
-#define POTEN_SCL 3
-
-//Saidas LCD
-#define LCD_RS  25 
-#define LCD_E   1  
-#define LCD_D4  12 
-#define LCD_D5  16 
-#define LCD_D6  20
-#define LCD_D7  21
-
-/*const static char* topic[TOPIC_NUM] = {
-    "arCondicionado",
-    "alarme ",
-    "sensorPJ ",
-    "faixaOpI",
-    "faixaOpS",
-    "iluminacaoInterna",
-    "sensorPresenca",
-    "temperatura",
-    "iluminacaoGaragem",
-    "iluminacaoJardim"
-};*/
-
 int main(){ 
     
     MQTTBegin();
@@ -205,6 +190,7 @@ int main(){
     MQTTSubscribe(TOPIC_faixaOPS_P);
     
     wiringPiSetupGpio();
+
     /*Lista de entradas do programa*/ 
     pinMode(DIP_1,INPUT); // alarme
     pinMode(DIP_2,INPUT); // sensor presença
@@ -221,25 +207,24 @@ int main(){
     int lcd = lcdInit(2,16,4,LCD_RS,LCD_E,LCD_D4,LCD_D5,LCD_D6,LCD_D7,0,0,0,0); 
     //sleep(2);
 
-    int horario;
-    int faixa_operacao_S;
-    int faixa_operacao_I;
-    int temopar;
-    int timeout;
+    int horario = 12;
+    int faixa_operacao_S = 23;
+    int faixa_operacao_I = 17;
+    int temopar =1;
+    int timeout = 2;
+    char texto_lcd[100];
 
-    //Para receber as atualizações do site.
-    MQTTClient_setCallbacks(client, NULL, NULL, on_message, NULL);
     //Para manter um loop infinito
     while(1){ 
 
-        entrada_temperatura = digitalRead(POTEN_SDA) * 10;
+        /*entrada_temperatura = digitalRead(POTEN_SDA) * 10;
         if(BUTTON_1 == LOW){
             entrada_temperatura = digitalRead(POTEN_SCL) * 10;
         }
 
         if(BUTTON_2 == LOW){
             entrada_temperatura = digitalRead(POTEN_SCL) * 10;
-        }
+        }*/
         
         //fazer a conversão de tipos para esses valores
         MQTTPublish(TOPIC_TEMPERATURA, entrada_temperatura);
@@ -248,7 +233,7 @@ int main(){
 
 
         //iluminacao_garagem
-        if((digitalRead(DIP_2) == HIGH /*|| sensor_presenca == 1*/) && !(horario > 6 && horario < 18)){
+        if((digitalRead(DIP_2) == HIGH ) && !(horario > 6 && horario < 18)){
             //saida_iluminacao_Garagem = 1;
             MQTTPublish(TOPIC_LUZ_GARAGEM, "ligado");
         }else{
@@ -267,7 +252,7 @@ int main(){
 
 
         //iluminação interna
-        if(digitalRead(DIP_2) == HIGH || entrada_iluminacao_interna == '1' /*|| sensor_presenca == 1*/){
+        if(digitalRead(DIP_2) == HIGH || entrada_iluminacao_interna == "1"){
             //saida_iluminacao_interna = 1;
             saida_iluminacao_interna = "Luz L";
             MQTTPublish(TOPIC_LUZ_INTERNA, "ligado");
@@ -278,7 +263,7 @@ int main(){
         } 
 
         //alarme
-        if(((digitalRead(DIP_1) == HIGH) || entrada_alarme == '1') || (digitalRead(DIP_2) == HIGH /*|| sensor_presenca == 1*/) && (digitalRead(DIP_3) == HIGH)){
+        if(((digitalRead(DIP_1) == HIGH) || entrada_alarme == "1") && ((digitalRead(DIP_2) == HIGH) || (digitalRead(DIP_3) == HIGH))){
             saida_Saida_alarme = "Alarme L";
             MQTTPublish(TOPIC_ALARME, "ligado");
         }else{
@@ -313,19 +298,11 @@ int main(){
             }
         //}
 
-        if(timeout){
-            temopar = 1;
-        }
-
-        //quebra do loop
-        if(0){
-            break;
-        } 
-
         //printar mensagens no lcd
         lcdClear(lcd);
         lcdPosition(lcd, 0, 0);
-        lcdPuts(lcd,saida_ar_condicionado);
+        sprintf(texto_lcd, "%s", saida_ar_condicionado);
+        lcdPuts(lcd,texto_lcd);
         sleep(3000);
         lcdPosition(lcd, 5, 0);
         lcdPuts(lcd,saida_iluminacao_interna);
