@@ -12,7 +12,6 @@ apresentar no mínimo:
     5.1.7. Interface para ajuste da faixa de operação do ar-condicionado.
     5.2. Usar recursos do ambiente Amazon Web Services (AWS).
 */
-
 #include <stdio.h>
 #include <stdlib.h> 
 #include <unistd.h>
@@ -55,7 +54,8 @@ char* saida_Saida_alarme;
 /*Lista de entradas do programa*/
 int sensor_PJ = 0;
 int sensor_presenca = 0;
-char* entrada_temperatura = "19";
+int entrada_temperatura = 19;
+char* entrada_temperatura1 = "19";
 char* faixa_operacao_inferior;
 char* faixa_operacao_superior;
 char* entrada_iluminacao_interna;
@@ -97,19 +97,19 @@ int on_message(void *context, char *topicName, int topicLen, MQTTClient_message 
         if(topicName == TOPIC_Alarme_P){
             saida_Saida_alarme = payload;
         }else if(topicName == TOPIC_faixaOPI_P){
-            faixa_operacao_inferior =  (char*)message->payload;
+            faixa_operacao_inferior = payload;
         }else if(topicName == TOPIC_faixaOPS_P){
-            faixa_operacao_superior = (char*)message->payload;
+            faixa_operacao_superior = payload;
         }else if(topicName == TOPIC_ILUMINACAO_INTERNA){ //Nome para printar
-            saida_iluminacao_interna = (char*)message->payload;
+            saida_iluminacao_interna = payload;
         }/*else if(topicName == "sensorPJ"){
             sensor_PJ = message->payload - '0';
         }else if(topicName == "sensorPresenca"){
             sensor_presenca = message->payload - '0';
         }*/else if(topicName == TOPIC_EST_ILUMINACAO_INTERNA){
-            entrada_iluminacao_interna = (char*)message->payload;
+            entrada_iluminacao_interna = payload;
         }else if(topicName == TOPIC_ESTADO_ALARME){
-            entrada_alarme = (char*)message->payload;
+            entrada_alarme = payload;
         } 
     }
 
@@ -227,7 +227,7 @@ int main(){
         }*/
         
         //fazer a conversão de tipos para esses valores
-        MQTTPublish(TOPIC_TEMPERATURA, entrada_temperatura);
+        MQTTPublish(TOPIC_TEMPERATURA, entrada_temperatura1);
         MQTTPublish(TOPIC_OPERACAO_INFERIOR, "17");
         MQTTPublish(TOPIC_OPERACAO_SUPERIOR, "23");
 
