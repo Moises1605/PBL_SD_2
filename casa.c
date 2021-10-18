@@ -59,12 +59,22 @@ char* entrada_temperatura1 = "19";
 char* faixa_operacao_inferior;
 char* faixa_operacao_superior;
 char* entrada_iluminacao_interna;
+int entrada_iluminacao_internaAux = 0;
 char* entrada_alarme;
+int entrada_alarmeAux = 0;
 
 
 char* saida_ar_condicionado;
 char* saida_iluminacao_jardim;
 char* saida_iluminacao_Garagem;
+
+
+int horario = 12;
+int faixa_operacao_S = 23;
+int faixa_operacao_I = 17;
+int temopar =1;
+int timeout = 2;
+char texto_lcd[100];
 
 
 
@@ -95,22 +105,34 @@ int on_message(void *context, char *topicName, int topicLen, MQTTClient_message 
         char* payload = message->payload;
 
         if(topicName == TOPIC_Alarme_P){
-            saida_Saida_alarme = payload;
+            entrada_alarme = message->payload;
+            if(strcmp(entrada_alarme,"1") == 0){
+                entrada_alarmeAux = 1;
+            }else{
+                entrada_alarmeAux = 0;
+            }
         }else if(topicName == TOPIC_faixaOPI_P){
             faixa_operacao_inferior = payload;
+            faixa_operacao_I = atoi(faixa_operacao_inferior);
         }else if(topicName == TOPIC_faixaOPS_P){
             faixa_operacao_superior = payload;
-        }else if(topicName == TOPIC_ILUMINACAO_INTERNA){ //Nome para printar
+             faixa_operacao_S = atoi(faixa_operacao_superior);y
+        }/*else if(topicName == TOPIC_ILUMINACAO_INTERNA){ //Nome para printar
             saida_iluminacao_interna = payload;
-        }/*else if(topicName == "sensorPJ"){
+        }else if(topicName == "sensorPJ"){
             sensor_PJ = message->payload - '0';
         }else if(topicName == "sensorPresenca"){
             sensor_presenca = message->payload - '0';
         }*/else if(topicName == TOPIC_EST_ILUMINACAO_INTERNA){
-            entrada_iluminacao_interna = payload;
-        }else if(topicName == TOPIC_ESTADO_ALARME){
+            entrada_iluminacao_interna = message->payload;
+            if(strcmp(entrada_iluminacao_interna,"1") == 0){
+                entrada_iluminacao_internaAux = 1;
+            }else{
+                entrada_iluminacao_internaAux = 0;
+            }
+        }/*else if(topicName == TOPIC_ESTADO_ALARME){
             entrada_alarme = payload;
-        } 
+        }*/ 
     }
 
     MQTTClient_freeMessage(&message);
@@ -206,13 +228,6 @@ int main(){
 
     int lcd = lcdInit(2,16,4,LCD_RS,LCD_E,LCD_D4,LCD_D5,LCD_D6,LCD_D7,0,0,0,0); 
     //sleep(2);
-
-    int horario = 12;
-    int faixa_operacao_S = 23;
-    int faixa_operacao_I = 17;
-    int temopar =1;
-    int timeout = 2;
-    char texto_lcd[100];
     
     //Para manter um loop infinito
     while(1){ 
@@ -231,6 +246,12 @@ int main(){
         MQTTPublish(TOPIC_OPERACAO_INFERIOR, "17");
         MQTTPublish(TOPIC_OPERACAO_SUPERIOR, "23");
 
+
+        if(digitalRead(DIP_1) == HIGH){
+            MQTTPublish(TOPIC_ESTADO_ALARME, "ligado");
+        }else{
+            MQTTPublish(TOPIC_ESTADO_ALARME, "desligado");
+        }
 
         //iluminacao_garagem
         if((digitalRead(DIP_2) == HIGH ) && !(horario > 6 && horario < 18)){
@@ -252,7 +273,7 @@ int main(){
 
 
         //iluminação interna
-        if(digitalRead(DIP_2) == HIGH || entrada_iluminacao_interna == "1"){
+        if(digitalRead(DIP_2) == HIGH || entrada_iluminacao_internaAux == 1){
             //saida_iluminacao_interna = 1;
             saida_iluminacao_interna = "Luz L";
             MQTTPublish(TOPIC_LUZ_INTERNA, "ligado");
@@ -263,12 +284,12 @@ int main(){
         } 
 
         //alarme
-        if(((digitalRead(DIP_1) == HIGH) || entrada_alarme == "1") && ((digitalRead(DIP_2) == HIGH) || (digitalRead(DIP_3) == HIGH))){
+        if(((digitalRead(DIP_1) == HIGH) || entrada_alarmeAux == 1) && ((digitalRead(DIP_2) == HIGH) || (digitalRead(DIP_3) == HIGH))){
             saida_Saida_alarme = "Alarme L";
-            MQTTPublish(TOPIC_ALARME, "ligado");
+            MQTTPublish(TOPIC_ALARME, "ativado");
         }else{
             saida_Saida_alarme = "Alarme D";
-            MQTTPublish(TOPIC_ALARME, "desligado");
+            MQTTPublish(TOPIC_ALARME, "desativado");
         } 
 
         //ar condicionado
