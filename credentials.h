@@ -1,16 +1,10 @@
 #ifndef LINUX_CREDENTIALS
 #define LINUX_CREDENTIALS
 
-/* Provide MQTT broker credentials as denoted in maqiatto.com. */
 #define CLIENTID        "clientePlaca"
 #define BROKER_ADDR     "maqiatto.com"
 #define USERNAME        "moisesalmeida123_@hotmail.com"
 #define PASSWORD        "pblsd"
-
-/* Provide topic as it is denoted in your topic list. 
- * For example mine is : cadominna@gmail.com/topic1
- * To add topics, see https://www.maqiatto.com/configure
- */
 
 //Tópicos utilizados pelo site
 #define TOPICC                           "moisesalmeida123_@hotmail.com/opaa"
@@ -35,7 +29,7 @@
 #define TOPIC_TEMPERATURA_P             "moisesalmeida123_@hotmail.com/temperaturaP"
 
 
-#endif /* LINUX_CREDENTIALS */
+#endif 
 
 
 
