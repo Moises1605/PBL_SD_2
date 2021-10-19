@@ -51,25 +51,28 @@ MQTTClient client;
 char* saida_iluminacao_interna;
 char* saida_Saida_alarme;
 
+int saida_iluminacao_internaAux = 0;
+int saida_Saida_alarmeAux = 0;
+int saida_ar_condicionadoAux = 0;
+int horario = 12;
+
 /*Lista de entradas do programa*/
 int sensor_PJ = 0;
 int sensor_presenca = 0;
 int entrada_temperatura = 19;
-char* entrada_temperatura1 = "19";
-char* faixa_operacao_inferior;
-char* faixa_operacao_superior;
-char* entrada_iluminacao_interna;
+char entrada_temperatura1[2] = "19";
+char faixa_operacao_inferior[2];
+char faixa_operacao_superior[2];
+char* entrada_iluminacao_interna = "0";
 int entrada_iluminacao_internaAux = 0;
-char* entrada_alarme;
+int entrada_alarme;
 int entrada_alarmeAux = 0;
 
 
 char* saida_ar_condicionado;
-char* saida_iluminacao_jardim;
-char* saida_iluminacao_Garagem;
+int saida_iluminacao_jardim;
+int saida_iluminacao_Garagem;
 
-
-int horario = 12;
 int faixa_operacao_S = 23;
 int faixa_operacao_I = 17;
 int temopar =1;
@@ -104,35 +107,30 @@ int on_message(void *context, char *topicName, int topicLen, MQTTClient_message 
 
         char* payload = message->payload;
 
-        if(topicName == TOPIC_Alarme_P){
-            entrada_alarme = message->payload;
-            if(strcmp(entrada_alarme,"1") == 0){
-                entrada_alarmeAux = 1;
-            }else{
-                entrada_alarmeAux = 0;
-            }
-        }else if(topicName == TOPIC_faixaOPI_P){
-            faixa_operacao_inferior = payload;
-            faixa_operacao_I = atoi(faixa_operacao_inferior);
-        }else if(topicName == TOPIC_faixaOPS_P){
-            faixa_operacao_superior = payload;
-             faixa_operacao_S = atoi(faixa_operacao_superior);y
-        }/*else if(topicName == TOPIC_ILUMINACAO_INTERNA){ //Nome para printar
+        if(strcmp(topicName,TOPIC_Alarme_P) == 0){
+            entrada_alarme = atoi(payload);
+        }else if(strcmp(topicName,TOPIC_faixaOPI_P) == 0){
+            faixa_operacao_I = atoi(payload);
+        }else if(strcmp(topicName,TOPIC_faixaOPS_P) == 0){
+            faixa_operacao_S = atoi(payload);
+        }else if(topicName == TOPIC_ILUMINACAO_INTERNA){ //Nome para printar
             saida_iluminacao_interna = payload;
-        }else if(topicName == "sensorPJ"){
+        }/*else if(topicName == "sensorPJ"){
             sensor_PJ = message->payload - '0';
         }else if(topicName == "sensorPresenca"){
             sensor_presenca = message->payload - '0';
-        }*/else if(topicName == TOPIC_EST_ILUMINACAO_INTERNA){
+        }*/else if(strcmp(topicName,"moisesalmeida123_@hotmail.com/estIlumincaoInternaP") == 0){
             entrada_iluminacao_interna = message->payload;
             if(strcmp(entrada_iluminacao_interna,"1") == 0){
                 entrada_iluminacao_internaAux = 1;
             }else{
                 entrada_iluminacao_internaAux = 0;
             }
-        }/*else if(topicName == TOPIC_ESTADO_ALARME){
-            entrada_alarme = payload;
-        }*/ 
+        }else if(strcmp(topicName,"moisesalmeida123_@hotmail.com/horario") == 0){
+            horario = atoi(message->payload);
+        }else if(strcmp(topicName,TOPIC_TEMPERATURA_P) == 0){
+           entrada_temperatura = atoi(payload);
+        } 
     }
 
     MQTTClient_freeMessage(&message);
@@ -143,9 +141,9 @@ int on_message(void *context, char *topicName, int topicLen, MQTTClient_message 
 
 void connlost(void *context, char *cause)
 {
-    printf("Connection lost\n");
+    printf("Conexao perdida\n");
     if (cause)
-        printf("Reason is : %s\n", cause);
+        printf("Razao e : %s\n", cause);
     MQTTDisconnect();
     /* Force to reconnect! */
     MQTTBegin();
@@ -153,7 +151,7 @@ void connlost(void *context, char *cause)
 
 void MQTTSubscribe(const char* topic)
 {
-    printf("Subscribing to topic %s for client %s using QoS%d\n\n", 
+    printf("Subscribing no topico %s para o cliente %s usando QoS%d\n\n", 
         topic, CLIENTID, QOS);
     MQTTClient_subscribe(client, topic, QOS);
 }
@@ -167,11 +165,7 @@ void MQTTPublish(const char* topic, char* message)
     pubmsg.qos = QOS;
     pubmsg.retained = 1;
     MQTTClient_publishMessage(client, topic, &pubmsg, &token);
-    /*printf("Waiting for publication of message: %s\n"
-            "topic: %s\n client: %s\n",
-            message, TOPIC, CLIENTID);*/
     int rc = MQTTClient_waitForCompletion(client, token, 1000);
-    /*printf("Message with delivery token %d delivered\n", token);*/
 }
 
 void MQTTDisconnect()
@@ -183,7 +177,7 @@ void MQTTDisconnect()
 void MQTTBegin()
 {
     int rc = -1;
-    printf("Initializing MQTT...\n");
+    printf("Iniciando conexao com o broker Maqiatto...\n");
     MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
     conn_opts.keepAliveInterval = KEEP_ALIVE;
     conn_opts.cleansession = 1;
@@ -192,12 +186,11 @@ void MQTTBegin()
     MQTTClient_create(&client, BROKER_ADDR, CLIENTID,
         MQTTCLIENT_PERSISTENCE_NONE, NULL);
 
-    /* Set connection, subscribe and publish callbacks. */
     MQTTClient_setCallbacks(client, NULL, connlost, on_message, NULL);
 
     while ((rc = MQTTClient_connect(client, &conn_opts)) != MQTTCLIENT_SUCCESS)
     {
-        printf("Failed to connect, return code %d\n", rc);
+        printf("Falha ao conectar, return code %d\n", rc);
         sleep(TIMEOUT / 1000); 
     }
 }
@@ -210,6 +203,10 @@ int main(){
     MQTTSubscribe(TOPIC_Alarme_P);
     MQTTSubscribe(TOPIC_faixaOPI_P);
     MQTTSubscribe(TOPIC_faixaOPS_P);
+    MQTTSubscribe(TOPIC_ILUMINACAO_INTERNA);
+    MQTTSubscribe(TOPIC_EST_ILUMINACAO_INTERNA);
+    MQTTSubscribe(TOPIC_HORARIO);
+    MQTTSubscribe(TOPIC_TEMPERATURA_P);
     
     wiringPiSetupGpio();
 
@@ -242,9 +239,12 @@ int main(){
         }*/
         
         //fazer a conversão de tipos para esses valores
+        sprintf(entrada_temperatura1, "%d", entrada_temperatura);
         MQTTPublish(TOPIC_TEMPERATURA, entrada_temperatura1);
-        MQTTPublish(TOPIC_OPERACAO_INFERIOR, "17");
-        MQTTPublish(TOPIC_OPERACAO_SUPERIOR, "23");
+        sprintf(faixa_operacao_inferior, "%d", faixa_operacao_I);
+        MQTTPublish(TOPIC_OPERACAO_INFERIOR, faixa_operacao_inferior);
+        sprintf(faixa_operacao_superior, "%d", faixa_operacao_S);
+        MQTTPublish(TOPIC_OPERACAO_SUPERIOR, faixa_operacao_superior);
 
 
         if(digitalRead(DIP_1) == HIGH){
@@ -255,58 +255,64 @@ int main(){
 
         //iluminacao_garagem
         if((digitalRead(DIP_2) == HIGH ) && !(horario > 6 && horario < 18)){
-            //saida_iluminacao_Garagem = 1;
+            saida_iluminacao_Garagem = 1;
             MQTTPublish(TOPIC_LUZ_GARAGEM, "ligado");
         }else{
-            //saida_iluminacao_Garagem = 0;
+            saida_iluminacao_Garagem = 0;
             MQTTPublish(TOPIC_LUZ_GARAGEM, "desligado");
         }
 
         //iluminacai_jardim
         if(horario >= 18 && horario <= 23){
-            //saida_iluminacao_jardim = 1;
+            saida_iluminacao_jardim = 1;
             MQTTPublish(TOPIC_LUZ_JARDIM, "ligado");
         }else{
-            //saida_iluminacao_jardim = 0;
+            saida_iluminacao_jardim = 0;
             MQTTPublish(TOPIC_LUZ_JARDIM, "desligado");
         }
 
 
         //iluminação interna
         if(digitalRead(DIP_2) == HIGH || entrada_iluminacao_internaAux == 1){
-            //saida_iluminacao_interna = 1;
+            saida_iluminacao_internaAux = 1;
             saida_iluminacao_interna = "Luz L";
             MQTTPublish(TOPIC_LUZ_INTERNA, "ligado");
         }else{
-            //saida_iluminacao_interna = 0;
+            saida_iluminacao_internaAux = 0;
             saida_iluminacao_interna = "Luz D";
             MQTTPublish(TOPIC_LUZ_INTERNA, "desligado");
         } 
 
         //alarme
-        if(((digitalRead(DIP_1) == HIGH) || entrada_alarmeAux == 1) && ((digitalRead(DIP_2) == HIGH) || (digitalRead(DIP_3) == HIGH))){
+        if(((digitalRead(DIP_1) == HIGH) || entrada_alarme == 1) && ((digitalRead(DIP_2) == HIGH) || (digitalRead(DIP_3) == HIGH))){
+            saida_Saida_alarmeAux = 1;
             saida_Saida_alarme = "Alarme L";
-            MQTTPublish(TOPIC_ALARME, "ativado");
+            MQTTPublish(TOPIC_ALARME, "ligado");
         }else{
+            saida_Saida_alarmeAux = 0;
             saida_Saida_alarme = "Alarme D";
-            MQTTPublish(TOPIC_ALARME, "desativado");
+            MQTTPublish(TOPIC_ALARME, "desligado");
         } 
 
         //ar condicionado
         //if(temopar){
             if(faixa_operacao_I >= faixa_operacao_S){
+                saida_ar_condicionadoAux = 0;
                 saida_ar_condicionado = "ar D";
                 MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
             }else{
                 if(digitalRead(DIP_2) == HIGH){
                     if(entrada_temperatura <= faixa_operacao_I){
+                        saida_ar_condicionadoAux = 0;
                         saida_ar_condicionado = "ar D";
                         MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
                     }else if(entrada_temperatura >= faixa_operacao_S){
+                        saida_ar_condicionadoAux = 1;
                         saida_ar_condicionado = "ar L";
                         MQTTPublish(TOPIC_ARCONDICIONADO, "ligado");
                     }
                 }else{
+                    saida_ar_condicionadoAux = 0;
                     saida_ar_condicionado = "ar D";
                     MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
                 }
@@ -318,19 +324,44 @@ int main(){
                 
             }
         //}
-
-        //printar mensagens no lcd
         lcdClear(lcd);
         lcdPosition(lcd, 0, 0);
-        sprintf(texto_lcd, "%s", saida_ar_condicionado);
-        lcdPuts(lcd,texto_lcd);
+        if(saida_iluminacao_internaAux == 1){
+            lcdPuts(lcd,"LUZ L");
+        }else{
+            lcdPuts(lcd,"LUZ D");
+        }
         sleep(3000);
         lcdPosition(lcd, 5, 0);
-        lcdPuts(lcd,saida_iluminacao_interna);
+        if(saida_Saida_alarmeAux == 1){
+            lcdPuts(lcd,"Alarme L");
+        }else{
+            lcdPuts(lcd,"Alarme D");
+        }
         sleep(3000);
         lcdPosition(lcd, 0, 1);
-        lcdPuts(lcd,saida_Saida_alarme);
+        if(saida_ar_condicionadoAux == 0){
+            lcdPuts(lcd,"AR L");
+        }else{
+            lcdPuts(lcd,"AR D");
+        }
+        lcdPosition(lcd, 5, 1);
+        if(saida_iluminacao_jardim == 1){
+            lcdPuts(lcd,"LJ L");
+        }else{
+            lcdPuts(lcd,"LJ D");
+        }
+        sleep(3000);
+        lcdPosition(lcd, 10, 0);
+        if(saida_iluminacao_Garagem == 1){
+            lcdPuts(lcd,"LG L");
+        }else{
+            lcdPuts(lcd,"LG D");
+        }
         sleep(5000);
+        
+        //printar mensagens no lcd
+        
         /*Por padrão, o texto é impresso na tela na linha superior, segunda coluna. Para alterar a posição, use 
         lcdPosition (lcd, COLUMN, ROW).Em um LCD 16 × 2, as linhas são numeradas de 0 a 1 e as colunas são numeradas de 0 a 15.*/
     }

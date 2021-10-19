@@ -31,6 +31,8 @@
 #define TOPIC_faixaOPS_P                "moisesalmeida123_@hotmail.com/faixaOpSP"
 #define TOPIC_ILUMINACAO_INTERNA        "moisesalmeida123_@hotmail.com/iluminacaoInternaP"
 #define TOPIC_EST_ILUMINACAO_INTERNA    "moisesalmeida123_@hotmail.com/estIlumincaoInternaP"
+#define TOPIC_HORARIO                   "moisesalmeida123_@hotmail.com/horario"
+#define TOPIC_TEMPERATURA_P             "moisesalmeida123_@hotmail.com/temperaturaP"
 
 
 #endif /* LINUX_CREDENTIALS */
