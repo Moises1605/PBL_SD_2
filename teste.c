@@ -1,84 +1,64 @@
+/*
+5.1. O acionamento remoto deve ser feito por meio de uma página Web, que deve
+apresentar no mínimo:
+    5.1.1. Estado atual das lâmpadas da residência;
+    5.1.2. Acionamento remoto da iluminação dos ambientes internos. Esse
+    acionamento deve ser programável;
+    5.1.3. Ativação e desativação remota do alarme;
+    5.1.4. Estado atual do alarme e notificação de uma possível invasão;
+    5.1.5. Histórico mensal do alarme, contendo a data, o horário e o tipo de evento
+    ocorrido;
+    5.1.6. Estado atual do ar-condicionado e a temperatura atual da sala;
+    5.1.7. Interface para ajuste da faixa de operação do ar-condicionado.
+    5.2. Usar recursos do ambiente Amazon Web Services (AWS).
+*/
 #include <stdio.h>
-#include <lcd.h>
-#include <wiringPi.h>
+#include <stdlib.h> 
+#include <unistd.h>
+#include <string.h> 
 
-//Saidas LCD
-#define LCD_RS  25 
-#define LCD_E   1  
-#define LCD_D4  12 
-#define LCD_D5  16 
-#define LCD_D6  20
-#define LCD_D7  21
 
-//Entradas DIP SWICTH
-#define DIP_1 4
-#define DIP_2 17
-#define DIP_3 27
-#define DIP_4 22
+FILE *arquivo_log;
+FILE *arquivo_log_auxiliar;
 
-//Entradas Botões
-#define BUTTON_1 5
-#define BUTTON_2 19
-#define BUTTON_3 26 
-
-//Potenciomentto
-#define POTEN_SDA 2
-#define POTEN_SCL 3
- 
-int main()
-{
-
-    wiringPiSetup();    
-    pinMode(DIP_1,INPUT); // alarme dip switch
-    
-    int lcd = lcdInit(2,16,4,LCD_RS,LCD_E,LCD_D4,LCD_D5,LCD_D6,LCD_D7,0,0,0,0); 
-    double entrada_temperatura;
-    char entrada_temperaturaAux[10]; 
-    double faixa_superior;
-    char faixa_superiorAux[10];
-    double faixa_inferior;
-    char faixa_inferiorAux[10];
-
-    while(1)
-    {   
-
-        if(BUTTON_3 == HIGH){
-            entrada_temperatura = digitalRead(POTEN_SDA) /** 10*/;
-            lcdPuts(lcd,digitalRead(POTEN_SDA));
-        }
-        if(BUTTON_1 == HIGH){
-            faixa_inferior = digitalRead(POTEN_SCL) /** 10*/;
-            lcdPuts(lcd,digitalRead(POTEN_SCL));
-        }
-        if(BUTTON_2){
-            faixa_superior = digitalRead(POTEN_SCL)/* * 10*/;
-            lcdPuts(lcd,digitalRead(POTEN_SCL));
-        }
-
-        /*if(BUTTON_3 == HIGH){
-            entrada_temperatura = digitalRead(POTEN_SDA)* 10;
-            sprintf(entrada_temperaturaAux,"%f",entrada_temperatura)
-            lcdPuts(lcd,entrada_temperaturaAux);
-        }
-        if(BUTTON_1 == HIGH){
-            faixa_inferior = digitalRead(POTEN_SCL)* 10;
-            sprintf(faixa_inferiorAux,"%f",faixa_inferior)
-            lcdPuts(lcd,faixa_inferiorAux);
-        }
-        if(BUTTON_2){
-            faixa_superior = digitalRead(POTEN_SCL)* 10;
-            sprintf(faixa_superiorAux,"%f",faixa_superior)
-            lcdPuts(lcd,faixa_superiorAux);
-        }*/
-
-        lcdClear(lcd);
-        lcdPosition(lcd, 0, 0);
-        lcdPuts(lcd,"Ar D");
-        lcdPosition(lcd, 5, 0);
-        lcdPuts(lcd,"Luz L");
-        lcdPosition(lcd, 0, 1);
-        lcdPuts(lcd,"Alarme L"); //delay
-        lcdPosition(lcd, 0, 0); //protocolo i2c //nilton braga // 0 -- 3000 e pouco 14bits
-    }
-    return 0;
+void log_dispositivo(char* conteudo){
+    arquivo_log = fopen("log.txt", "a");
+    fprintf(arquivo_log, "%s", conteudo);
+    fclose(arquivo_log);
+    /*fprintf(arquivo_log, "%s", dispositivo);
+    fprintf(arquivo_log, "%s", ": ");
+    fprintf(arquivo_log, "%s", conteudo);
+    fprintf(arquivo_log, "%s", "\n");*/
 }
+
+
+//Apaga os registros até a linha indicada.
+void deletarLog(int num_linha){
+    char* conteudo_linha;
+    arquivo_log = fopen("log.txt", "a");
+    arquivo_log_auxiliar = fopen("log_auxiliar.txt", "a");
+
+    for(int i =0; i < num_linha; i++){
+        fgets (conteudo_linha, 100,arquivo_log);    
+    }
+
+    while((fgets(conteudo_linha, 100,arquivo_log)) != EOF){
+        fprintf(arquivo_log_auxiliar, "%s", conteudo_linha);
+    }
+
+    fclose(arquivo_log);
+    remove("log_auxiliar.txt");
+    arquivo_log = fopen("log.txt", "a");
+    while((fgets(conteudo_linha, 100,arquivo_log)) != EOF){
+        fprintf(arquivo_log, "%s", conteudo_linha);
+    }
+    
+    fclose(arquivo_log_auxiliar);
+    fclose(arquivo_log);
+}
+
+int main(){ 
+    char* conteudo = "Teste de escrita em arquivo"
+    log_dispositivo(conteudo);
+    return 0;
+} 
