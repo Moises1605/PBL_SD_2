@@ -34,31 +34,61 @@ void log_dispositivo(char* conteudo){
 
 //Apaga os registros até a linha indicada.
 void deletarLog(int num_linha){
-    char* conteudo_linha;
-    arquivo_log = fopen("log.txt", "a");
+
+    char conteudo_linha[100];
+    char* conteudo;
+    //int num_linha = atoi(num);
+
+    FILE *arquivo_log_temp = fopen("log.txt", "r");
     arquivo_log_auxiliar = fopen("log_auxiliar.txt", "a");
 
-    for(int i =0; i < num_linha; i++){
-        fgets (conteudo_linha, 100,arquivo_log);    
+    if(arquivo_log_temp == NULL || arquivo_log_auxiliar == NULL){
+        printf("Erro ao abrir arquivo");
+        exit(1);
+    } 
+
+    for(int i = 0; i < num_linha; i++){
+        fgets(conteudo_linha, 100,arquivo_log_temp);
+        printf("%s",conteudo_linha);    
     }
 
-    while((fgets(conteudo_linha, 100,arquivo_log)) != EOF){
+    while((fgets(conteudo_linha, 100,arquivo_log_temp)) != NULL){
         fprintf(arquivo_log_auxiliar, "%s", conteudo_linha);
     }
 
+    fclose(arquivo_log_auxiliar);
     fclose(arquivo_log);
-    remove("log_auxiliar.txt");
+    remove("log.txt");
+
     arquivo_log = fopen("log.txt", "a");
-    while((fgets(conteudo_linha, 100,arquivo_log)) != EOF){
+    arquivo_log_auxiliar = fopen("log_auxiliar.txt", "r");
+
+    while((fgets(conteudo_linha, 100,arquivo_log_auxiliar)) != NULL){
+        printf("%s",conteudo_linha);
         fprintf(arquivo_log, "%s", conteudo_linha);
     }
     
     fclose(arquivo_log_auxiliar);
     fclose(arquivo_log);
+    remove("log_auxiliar.txt");
 }
 
 int main(){ 
-    char* conteudo = "Teste de escrita em arquivo"
-    log_dispositivo(conteudo);
+
+    char* conteudo1 = "Teste de escrita em arquivo 1\n";
+    char* conteudo2 = "Teste de escrita em arquivo 2\n";
+    char* conteudo3 = "Teste de escrita em arquivo 3\n";
+    char* conteudo4 = "Teste de escrita em arquivo 4\n";
+    char* conteudo5 = "Teste de escrita em arquivo 5\n";
+
+    log_dispositivo(conteudo1);
+    log_dispositivo(conteudo2);
+    log_dispositivo(conteudo3);
+    log_dispositivo(conteudo4);
+    log_dispositivo(conteudo5); 
+
+    char* num = "3";
+    deletarLog(3);
+
     return 0;
 } 
