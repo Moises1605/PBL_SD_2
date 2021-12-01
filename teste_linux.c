@@ -15,36 +15,10 @@ apresentar no mínimo:
 #include <stdio.h>
 #include <stdlib.h> 
 #include <unistd.h>
-#include <wiringPi.h>
-#include <lcd.h>
 #include <string.h> 
 #include "mqtt.h"
 #include "credentials.h"
 #include "MQTTClient.h"
-
-//Entradas DIP SWICTH
-#define DIP_1 4
-#define DIP_2 17
-#define DIP_3 27
-#define DIP_4 22
-
-//Entradas Botões
-#define BUTTON_1 5
-#define BUTTON_2 19
-#define BUTTON_3 26
-
-
-//Entradas Potenciomentto
-#define POTEN_SDA 2
-#define POTEN_SCL 3
-
-//Saidas LCD
-#define LCD_RS  25 
-#define LCD_E   1  
-#define LCD_D4  12 
-#define LCD_D5  16 
-#define LCD_D6  20
-#define LCD_D7  21
 
 //Declaração da variavel para configuração do mqtt
 MQTTClient client;
@@ -118,29 +92,45 @@ void log_dispositivo(char* conteudo){
 
 //Apaga os registros até a linha indicada.
 void deletarLog(int num_linha){
-    char* conteudo_linha;
-    arquivo_log = fopen("log.txt", "a");
+
+    char conteudo_linha[100];
+    char* conteudo;
+    //int num_linha = atoi(num);
+
+    /*FILE *arquivo_log_temp = fopen("log.txt", "r");
     arquivo_log_auxiliar = fopen("log_auxiliar.txt", "a");
 
-    for(int i =0; i <= num_linha; i++){
-        fgets (conteudo_linha, 100,arquivo_log);    
+    if(arquivo_log_temp == NULL || arquivo_log_auxiliar == NULL){
+        printf("Erro ao abrir arquivo");
+        exit(1);
+    } 
+
+    for(int i = 0; i < num_linha; i++){
+        fgets(conteudo_linha, 100,arquivo_log_temp);
+        printf("%s",conteudo_linha);    
     }
 
-    while((fgets(conteudo_linha, 100,arquivo_log)) != EOF){
+    while((fgets(conteudo_linha, 100,arquivo_log_temp)) != NULL){
         fprintf(arquivo_log_auxiliar, "%s", conteudo_linha);
-    }
-
-    fclose(arquivo_log);
-    remove("log.txt");
-    arquivo_log = fopen("log.txt", "a");
-    while((fgets(conteudo_linha, 100,arquivo_log)) != EOF){
-        fprintf(arquivo_log, "%s", conteudo_linha);
     }
 
     fclose(arquivo_log_auxiliar);
     fclose(arquivo_log);
-    remove("log_auxiliar.txt");
+    remove("log.txt");
 
+    arquivo_log = fopen("log.txt", "a");
+    arquivo_log_auxiliar = fopen("log_auxiliar.txt", "r");
+
+    while((fgets(conteudo_linha, 100,arquivo_log_auxiliar)) != NULL){
+        printf("%s",conteudo_linha);
+        fprintf(arquivo_log, "%s", conteudo_linha);
+    }
+    
+    fclose(arquivo_log_auxiliar);
+    fclose(arquivo_log);*/
+    remove("log.txt");
+    FILE *arquivo_log_temp = fopen("log.txt", "w");
+    fclose(arquivo_log_temp);
 }
 
 //Função utilizada quando o dispositivo recebe alguma mensagem em um dos tópicos escritos
@@ -179,7 +169,7 @@ int on_message(void *context, char *topicName, int topicLen, MQTTClient_message 
            entrada_temperatura = atoi(payload);
         }else if(strcmp(topicName,TOPIC_LOG_P) == 0){
             log_dispositivo(payload);
-        }else if(vstrcmp(topicName,TOPIC_deletar_LOG_P) == 0){
+        }else if(strcmp(topicName,TOPIC_DELETAR_LOG_P) == 0){
             deletarLog(atoi(payload));
         } 
     }
@@ -251,8 +241,52 @@ void MQTTBegin()
     }
 }
 
+
+/*//Escreve o log dos dispositivos no arquivo
+void log_dispositivo(char* conteudo){
+    arquivo_log = fopen("log.txt", "a");
+    fprintf(arquivo_log, "%s", conteudo);
+    fclose(arquivo_log);
+    //fprintf(arquivo_log, "%s", dispositivo);
+    //fprintf(arquivo_log, "%s", ": ");
+    //fprintf(arquivo_log, "%s", conteudo);
+    //fprintf(arquivo_log, "%s", "\n");
+}
+
+
+//Apaga os registros até a linha indicada.
+void deletarLog(int num_linha){
+    char* conteudo_linha;
+    arquivo_log = fopen("log.txt", "a");
+    arquivo_log_auxiliar = fopen("log_auxiliar.txt", "a");
+
+    for(int i =0; i <= num_linha; i++){
+        fgets (conteudo_linha, 100,arquivo_log);    
+    }
+
+    while((fgets(conteudo_linha, 100,arquivo_log)) != EOF){
+        fprintf(arquivo_log_auxiliar, "%s", conteudo_linha);
+    }
+
+    fclose(arquivo_log);
+    remove("log.txt");
+    arquivo_log = fopen("log.txt", "a");
+    while((fgets(conteudo_linha, 100,arquivo_log)) != EOF){
+        fprintf(arquivo_log, "%s", conteudo_linha);
+    }
+
+    fclose(arquivo_log_auxiliar);
+    fclose(arquivo_log);
+    remove("log_auxiliar.txt");
+
+}*/
+
 int main(){ 
     
+    int sensor_presenca_entrada = 1;
+    int sensor_janela_porta_entrada = 1;
+    int alarme_entrada_ = 1;
+
     MQTTBegin();//Inicia a conexão com o broker
 
     //Dar subscribe nos tópicos necessários
@@ -264,24 +298,10 @@ int main(){
     MQTTSubscribe(TOPIC_EST_ILUMINACAO_INTERNA);
     MQTTSubscribe(TOPIC_HORARIO);
     MQTTSubscribe(TOPIC_TEMPERATURA_P);
-    
-    //inicia a biblioteca de mapeamento das pinagens da placa
-    wiringPiSetupGpio();
+    MQTTSubscribe(TOPIC_LOG_P);
+    MQTTSubscribe(TOPIC_DELETAR_LOG_P);
 
-    /*Esquema de penagem dos perifericos da placa*/ 
-    pinMode(DIP_1,INPUT); // representa o alarme
-    pinMode(DIP_2,INPUT); // representa o sensor presença
-    pinMode(DIP_3,INPUT); // representa o sensor de portas e janelas
-    pinMode(DIP_4,INPUT); 
 
-    pinMode(BUTTON_1,INPUT); 
-    pinMode(BUTTON_2,INPUT); 
-    pinMode(BUTTON_3,INPUT); 
-
-    pinMode(POTEN_SDA,INPUT);
-    pinMode(POTEN_SCL,INPUT);
-
-    int lcd = lcdInit(2,16,4,LCD_RS,LCD_E,LCD_D4,LCD_D5,LCD_D6,LCD_D7,0,0,0,0); 
     //Indica que o dispositivo foi ligado
     MQTTPublish(TOPIC_ESTADO_DISPOSITIVO, "ligado");
     //Para manter um loop infinito
@@ -298,7 +318,7 @@ int main(){
 
 
         //Veririca a situação do alarme e publica a mesma
-        if(digitalRead(DIP_1) == HIGH){
+        if(alarme_entrada_ == 1){
             entrada_alarmeAux = "Alarme ligado";
             MQTTPublish(TOPIC_ESTADO_ALARME, "ligado");
         }else{
@@ -309,7 +329,7 @@ int main(){
 
 
         // Veririca a situação da iluminacao da garagem e publica a mesma,  verifica se está dentro do horário de funcionamento e se o sensor de presença está ligado
-        if((digitalRead(DIP_2) == HIGH ) && !(horario > 6 && horario < 18)){
+        if((sensor_presenca_entrada == 1 ) && !(horario > 6 && horario < 18)){
             saida_iluminacao_GaragemAux = 1;
             saida_iluminacao_Garagem = "ligado";
             MQTTPublish(TOPIC_LUZ_GARAGEM, "ligado");
@@ -333,7 +353,7 @@ int main(){
         //log_dispositivo(saida_iluminacao_jardim,"Iluminação jardim");
 
         // Veririca a situação da iluminação interna e publica a mesma, verifica se o sensor de presença está ligado
-        if(digitalRead(DIP_2) == HIGH || entrada_iluminacao_internaAux == 1){
+        if(sensor_presenca_entrada == 1 || entrada_iluminacao_internaAux == 1){
             saida_iluminacao_internaAux = 1;
             saida_iluminacao_interna = "Luz Ligada";
             MQTTPublish(TOPIC_LUZ_INTERNA, "ligado");
@@ -345,7 +365,7 @@ int main(){
         //log_dispositivo(saida_iluminacao_interna,"Iluminação interna");
 
         //Veririca a situação da saida do alarme e publica a mesma, se o alarme está ativado, se o sensor de presença ou o sensor de porta e janela está ligado.
-        if(((digitalRead(DIP_1) == HIGH) || entrada_alarme == 1) && ((digitalRead(DIP_2) == HIGH) || (digitalRead(DIP_3) == HIGH))){
+        if(((alarme_entrada_ == 1) || entrada_alarme == 1) && ((sensor_presenca_entrada == 1) || (sensor_janela_porta_entrada == 1))){
             saida_Saida_alarmeAux = 1;
             saida_Saida_alarme = "Alarme Ligado";
             MQTTPublish(TOPIC_ALARME, "ligado");
@@ -365,7 +385,7 @@ int main(){
             MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
         }else{
             // Se o sensor de presença estiver desligado o ar condicionado é desligado
-            if(digitalRead(DIP_2) == HIGH){
+            if(sensor_presenca_entrada == 1){
                 // verifica se a temperatura indicada está dentro da faixa de operação
                 if(entrada_temperatura <= faixa_operacao_I){
                     saida_ar_condicionadoAux = 0;
@@ -399,43 +419,4 @@ int main(){
     MQTTPublish(TOPIC_ESTADO_DISPOSITIVO, "desligado");
     MQTTDisconnect();
     return 0;
-} 
-
-/*
- lcdClear(lcd);
-        lcdPosition(lcd, 0, 0);
-        if(saida_iluminacao_internaAux == 1){
-            lcdPuts(lcd,"LUZ L");
-        }else{
-            lcdPuts(lcd,"LUZ D");
-        }
-        sleep(3000);
-        lcdPosition(lcd, 5, 0);
-        if(saida_Saida_alarmeAux == 1){
-            lcdPuts(lcd,"Alarme L");
-        }else{
-            lcdPuts(lcd,"Alarme D");
-        }
-        sleep(3000);
-        lcdPosition(lcd, 0, 1);
-        if(saida_ar_condicionadoAux == 0){
-            lcdPuts(lcd,"AR L");
-        }else{
-            lcdPuts(lcd,"AR D");
-        }
-        lcdPosition(lcd, 5, 1);
-        if(saida_iluminacao_jardim == 1){
-            lcdPuts(lcd,"LJ L");
-        }else{
-            lcdPuts(lcd,"LJ D");
-        }
-        sleep(3000);
-        lcdPosition(lcd, 10, 0);
-        if(saida_iluminacao_Garagem == 1){
-            lcdPuts(lcd,"LG L");
-        }else{
-            lcdPuts(lcd,"LG D");
-        }
-        sleep(5000);
-        
-*/
+}

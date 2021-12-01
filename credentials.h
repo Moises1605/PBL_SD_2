@@ -29,7 +29,7 @@
 #define TOPIC_HORARIO                   "moisesalmeida123_@hotmail.com/horario"
 #define TOPIC_TEMPERATURA_P             "moisesalmeida123_@hotmail.com/temperaturaP"
 #define TOPIC_LOG_P                     "moisesalmeida123_@hotmail.com/escreverlogP" 
-#define TOPIC_deletar_LOG_P             "moisesalmeida123_@hotmail.com/deletarlogP" 
+#define TOPIC_DELETAR_LOG_P             "moisesalmeida123_@hotmail.com/deletarlogP" 
 
 //Tópicos utilizados pela nuvem
 #define TOPIC_ESTADO                      "moisesalmeida123_@hotmail.com/estadoN"

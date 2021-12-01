@@ -1,2 +1,0 @@
-Teste de escrita em arquivo 4
-Teste de escrita em arquivo 5
