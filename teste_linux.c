@@ -32,6 +32,9 @@ int saida_Saida_alarmeAux = 0;
 int saida_ar_condicionadoAux = 0;
 int horario = 12;
 
+int entrada_luz_garagem;
+int entrada_luz_jardim;
+int entrada_arcondicionado;
 int sensor_PJ = 0;
 int sensor_presenca = 0;
 int entrada_temperatura = 19;
@@ -171,6 +174,12 @@ int on_message(void *context, char *topicName, int topicLen, MQTTClient_message 
             log_dispositivo(payload);
         }else if(strcmp(topicName,TOPIC_DELETAR_LOG_P) == 0){
             deletarLog(atoi(payload));
+        }else if(strcmp(topicName,TOPIC_LUZ_GARAGEM_P) == 0){
+            entrada_luz_garagem = atoi(payload);
+        }else if(strcmp(topicName,TOPIC_LUZ_JARDIM_P) == 0){
+            entrada_luz_jardim = atoi(payload);
+        }else if(strcmp(topicName,TOPIC_ARCONDICIONADO_P) == 0){
+            entrada_arcondicionado = atoi(payload);
         } 
     }
 
@@ -283,7 +292,7 @@ void deletarLog(int num_linha){
 
 int main(){ 
     
-    int sensor_presenca_entrada = 1;
+    int sensor_presenca_entrada = 0;
     int sensor_janela_porta_entrada = 1;
     int alarme_entrada_ = 1;
 
@@ -300,6 +309,9 @@ int main(){
     MQTTSubscribe(TOPIC_TEMPERATURA_P);
     MQTTSubscribe(TOPIC_LOG_P);
     MQTTSubscribe(TOPIC_DELETAR_LOG_P);
+    MQTTSubscribe(TOPIC_LUZ_GARAGEM_P);
+    MQTTSubscribe(TOPIC_LUZ_JARDIM_P);
+    MQTTSubscribe(TOPIC_ARCONDICIONADO_P); 
 
 
     //Indica que o dispositivo foi ligado
@@ -318,10 +330,12 @@ int main(){
 
 
         //Veririca a situação do alarme e publica a mesma
-        if(alarme_entrada_ == 1){
+        if(alarme_entrada_ == 1 || entrada_alarme == 1){
+            //entrada_alarme = 1;
             entrada_alarmeAux = "Alarme ligado";
             MQTTPublish(TOPIC_ESTADO_ALARME, "ligado");
         }else{
+            //entrada_alarme = 0;
             entrada_alarmeAux = "Alarme desligado";
             MQTTPublish(TOPIC_ESTADO_ALARME, "desligado");
         }
@@ -329,7 +343,7 @@ int main(){
 
 
         // Veririca a situação da iluminacao da garagem e publica a mesma,  verifica se está dentro do horário de funcionamento e se o sensor de presença está ligado
-        if((sensor_presenca_entrada == 1 ) && !(horario > 6 && horario < 18)){
+        if(((sensor_presenca_entrada == 1 ) && !(horario > 6 && horario < 18)) || entrada_luz_garagem == 1){
             saida_iluminacao_GaragemAux = 1;
             saida_iluminacao_Garagem = "ligado";
             MQTTPublish(TOPIC_LUZ_GARAGEM, "ligado");
@@ -341,7 +355,7 @@ int main(){
         //log_dispositivo(saida_iluminacao_Garagem,"Iluminação garagem");
 
         // Veririca a situação da iluminacao do jardim e publica a mesma, verifica se está dentro do horário de funcionamento
-        if(horario >= 18 && horario <= 23){
+        if((horario >= 18 && horario <= 23) || entrada_luz_jardim == 1){
             saida_iluminacao_jardimAux = 1;
             saida_iluminacao_jardim = "ligado";
             MQTTPublish(TOPIC_LUZ_JARDIM, "ligado");
@@ -377,37 +391,43 @@ int main(){
         //log_dispositivo(saida_Saida_alarme,"Saida Alarme");
 
         // Verifica a situação do ar condicionado e publica a mesma
-
-        //Caso a faixa de operação superior seja menor que a inferior o ar condicionado é desligado
-        if(faixa_operacao_I >= faixa_operacao_S){
-            saida_ar_condicionadoAux = 0;
-            saida_ar_condicionado = "ar Desligado";
-            MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
+        if(entrada_arcondicionado){
+            saida_ar_condicionadoAux = 1;
+            saida_ar_condicionado = "ar Ligado";
+            MQTTPublish(TOPIC_ARCONDICIONADO, "ligado");
         }else{
-            // Se o sensor de presença estiver desligado o ar condicionado é desligado
-            if(sensor_presenca_entrada == 1){
-                // verifica se a temperatura indicada está dentro da faixa de operação
-                if(entrada_temperatura <= faixa_operacao_I){
-                    saida_ar_condicionadoAux = 0;
-                    saida_ar_condicionado = "ar Desligado";
-                    MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
-                }else if(entrada_temperatura >= faixa_operacao_S){
-                    saida_ar_condicionadoAux = 1;
-                    saida_ar_condicionado = "ar Ligado";
-                    MQTTPublish(TOPIC_ARCONDICIONADO, "ligado");
-                }
-            }else{
+            //Caso a faixa de operação superior seja menor que a inferior o ar condicionado é desligado
+            if(faixa_operacao_I >= faixa_operacao_S){
                 saida_ar_condicionadoAux = 0;
                 saida_ar_condicionado = "ar Desligado";
                 MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
+            }else{
+                // Se o sensor de presença estiver desligado o ar condicionado é desligado
+                if(sensor_presenca_entrada == 1){
+                    // verifica se a temperatura indicada está dentro da faixa de operação
+                    if(entrada_temperatura <= faixa_operacao_I){
+                        saida_ar_condicionadoAux = 0;
+                        saida_ar_condicionado = "ar Desligado";
+                        MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
+                    }else if(entrada_temperatura >= faixa_operacao_S){
+                        saida_ar_condicionadoAux = 1;
+                        saida_ar_condicionado = "ar Ligado";
+                        MQTTPublish(TOPIC_ARCONDICIONADO, "ligado");
+                    }
+                }else{
+                    saida_ar_condicionadoAux = 0;
+                    saida_ar_condicionado = "ar Desligado";
+                    MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
+                }
+            }
+            if(entrada_temperatura == 17){
+                saida_ar_condicionado = "ar Desligado";
+                MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
+                temopar = 0;
+                
             }
         }
-        if(entrada_temperatura == 17){
-            saida_ar_condicionado = "ar Desligado";
-            MQTTPublish(TOPIC_ARCONDICIONADO, "desligado");
-            temopar = 0;
-            
-        }
+        
         //log_dispositivo(saida_ar_condicionado,"Ar condicionado");
 
        

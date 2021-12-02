@@ -16,7 +16,8 @@
 #define TOPIC_LUZ_JARDIM                "moisesalmeida123_@hotmail.com/luzJardimS"
 #define TOPIC_LUZ_INTERNA               "moisesalmeida123_@hotmail.com/luzInternaS"
 #define TOPIC_ALARME                    "moisesalmeida123_@hotmail.com/AlarmeS" // A Saida do alarme
-#define TOPIC_ARCONDICIONADO            "moisesalmeida123_@hotmail.com/arcondicionadoS" 
+#define TOPIC_ARCONDICIONADO            "moisesalmeida123_@hotmail.com/arcondicionadoS"
+ 
 #define TOPIC_ESTADO_ALARME             "moisesalmeida123_@hotmail.com/estadoAlarmeP"
 #define TOPIC_ESTADO_DISPOSITIVO        "moisesalmeida123_@hotmail.com/ligadoP"
 
@@ -29,7 +30,10 @@
 #define TOPIC_HORARIO                   "moisesalmeida123_@hotmail.com/horario"
 #define TOPIC_TEMPERATURA_P             "moisesalmeida123_@hotmail.com/temperaturaP"
 #define TOPIC_LOG_P                     "moisesalmeida123_@hotmail.com/escreverlogP" 
-#define TOPIC_DELETAR_LOG_P             "moisesalmeida123_@hotmail.com/deletarlogP" 
+#define TOPIC_DELETAR_LOG_P             "moisesalmeida123_@hotmail.com/deletarlogP"
+#define TOPIC_LUZ_GARAGEM_P             "moisesalmeida123_@hotmail.com/luzGaragemP"
+#define TOPIC_LUZ_JARDIM_P              "moisesalmeida123_@hotmail.com/luzJardimP"
+#define TOPIC_ARCONDICIONADO_P          "moisesalmeida123_@hotmail.com/arcondicionadoP" 
 
 //Tópicos utilizados pela nuvem
 #define TOPIC_ESTADO                      "moisesalmeida123_@hotmail.com/estadoN"

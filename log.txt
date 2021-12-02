@@ -1,0 +1,15 @@
+
+Log do estado dos equipamentos da casa: 2/12/2021 0:54:47
+Luz Interna: Desligada
+Luz Jardim: Desligada
+Luz Garagem: Desligada
+Ar condicionado: Desligado
+Alarme: Desligado
+Saida Alarme: Ligado·C
+Log do estado dos equipamentos da casa: 2/12/2021 0:54:47
+Luz Interna: Desligada
+Luz Jardim: Desligada
+Luz Garagem: Desligada
+Ar condicionado: Desligado
+Alarme: Desligado
+Saida Alarme: Ligado·C
